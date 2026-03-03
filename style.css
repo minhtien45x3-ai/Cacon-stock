@@ -1,0 +1,13 @@
+:root { --bg-dark: #020617; }
+body { background-color: var(--bg-dark); color: #f8fafc; font-family: 'Inter', sans-serif; }
+.global-bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); }
+.blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; z-index: -1; }
+.blob-1 { width: 500px; height: 500px; background: #10b981; top: -100px; right: -100px; }
+.blob-2 { width: 400px; height: 400px; background: #3b82f6; bottom: -100px; left: -100px; }
+.glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.05); }
+.nav-btn { color: #94a3b8; transition: all 0.3s; }
+.nav-btn.active { color: white; border-bottom: 2px solid #10b981; }
+.admin-only { display: none !important; }
+body.is-admin .admin-only { display: block !important; }
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
