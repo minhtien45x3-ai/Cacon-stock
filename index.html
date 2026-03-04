@@ -1,302 +1,406 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaCon Stock - Professional Trading Suite</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CACON STOCK</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="./style.css" />
 </head>
-<body class="bg-[#020617] text-white h-screen flex flex-col overflow-hidden">
-    <div class="fixed inset-0 z-[-1]">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/20 blur-[120px] rounded-full"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900/20 blur-[120px] rounded-full"></div>
+
+<body>
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">↩</div>
+      <div class="brand-text">
+        <span class="brand-cacon">CACON</span>
+        <span class="brand-stock">STOCK</span>
+      </div>
     </div>
 
-    <header class="flex items-center justify-between px-8 py-4 border-b border-white/10 bg-black/20 backdrop-blur-md shrink-0">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-                <i data-lucide="bar-chart-3" class="text-black w-5 h-5"></i>
-            </div>
-            <h1 class="text-xl font-bold tracking-tight">CACON <span class="text-emerald-400">STOCK</span></h1>
-        </div>
-        <nav class="flex gap-1 overflow-x-auto no-scrollbar">
-            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">TỔNG QUAN</button>
-            <button onclick="switchTab('market')" id="btn-market" class="nav-btn">THỊ TRƯỜNG</button>
-            <button onclick="switchTab('radar')" id="btn-radar" class="nav-btn">RADAR</button>
-            <button onclick="switchTab('analysis')" id="btn-analysis" class="nav-btn">PHÂN TÍCH</button>
-            <button onclick="switchTab('capital')" id="btn-capital" class="nav-btn">VỐN</button>
-            <button onclick="switchTab('journal')" id="btn-journal" class="nav-btn">NHẬT KÝ</button>
-            <button onclick="switchTab('wiki')" id="btn-wiki" class="nav-btn">MẪU HÌNH</button>
-            <button onclick="switchTab('library')" id="btn-library" class="nav-btn">THƯ VIỆN</button>
-            <button onclick="switchTab('training')" id="btn-training" class="nav-btn">RÈN LUYỆN</button>
-            <button onclick="switchTab('psychology')" id="btn-psychology" class="nav-btn">TÂM LÝ</button>
-        </nav>
-    </header>
+    <nav class="topnav" id="topnav">
+      <button class="tab-btn active" data-tab="overview">TỔNG QUAN</button>
+      <button class="tab-btn" data-tab="market">THỊ TRƯỜNG</button>
+      <button class="tab-btn" data-tab="radar">RADAR</button>
+      <button class="tab-btn" data-tab="analysis">PHÂN TÍCH</button>
+      <button class="tab-btn" data-tab="capital">VỐN</button>
+      <button class="tab-btn" data-tab="journal">NHẬT KÝ</button>
+      <button class="tab-btn tab-green" data-tab="patterns">MẪU HÌNH</button>
+      <button class="tab-btn tab-blue" data-tab="library">THƯ VIỆN</button>
+      <button class="tab-btn tab-amber" data-tab="training">RÈN LUYỆN</button>
+      <button class="tab-btn tab-purple" data-tab="psychology">TÂM LÝ</button>
+    </nav>
+  </header>
 
-    <main class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-        <div id="tab-dashboard" class="tab-content space-y-8 animate-in">
-            <div class="text-center py-4 border-y border-white/5">
-                <p class="text-emerald-400 font-bold text-xs tracking-widest uppercase">"HỆ THỐNG ĐI TRƯỚC, TIỀN BẠC THEO SAU." - MARK MINERVINI</p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="stat-card border-emerald-500/50">
-                    <p class="stat-label">TÀI SẢN HIỆN TẠI</p>
-                    <h2 class="stat-value" id="dash-balance">2.043.988.000đ</h2>
-                </div>
-                <div class="stat-card border-blue-500/50">
-                    <p class="stat-label">LỢI NHUẬN RÒNG</p>
-                    <h2 class="stat-value text-emerald-400" id="dash-pnl">+43.988.000đ</h2>
-                </div>
-                <div class="stat-card border-amber-500/50">
-                    <p class="stat-label">TỶ LỆ THẮNG</p>
-                    <h2 class="stat-value text-amber-400" id="dash-winrate">67%</h2>
-                </div>
-                <div class="stat-card border-rose-500/50">
-                    <p class="stat-label">MÃ ĐANG GIỮ</p>
-                    <h2 class="stat-value text-rose-400" id="dash-holding">1</h2>
-                </div>
-            </div>
-            <div class="glass-panel p-6 flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <i data-lucide="sparkles" class="text-purple-400"></i>
-                    <div>
-                        <p class="font-bold text-sm text-purple-300">AI TRADING COACH</p>
-                        <p class="text-xs text-slate-400 italic">Nhấn nút để AI phân tích hiệu suất và kỷ luật của anh...</p>
-                    </div>
-                </div>
-                <button class="btn-ai">CHẨN ĐOÁN PERFORMANCE</button>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 glass-panel p-6 h-80">
-                    <p class="text-xs font-bold text-slate-500 mb-4 flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4"></i> TĂNG TRƯỞNG TÀI SẢN</p>
-                    <canvas id="equityChart"></canvas>
-                </div>
-                <div class="glass-panel p-6 h-80">
-                    <p class="text-xs font-bold text-slate-500 mb-4 flex items-center gap-2"><i data-lucide="pie-chart" class="w-4 h-4"></i> PHÂN BỔ VỐN THỰC TẾ</p>
-                    <canvas id="allocationChart"></canvas>
-                </div>
-            </div>
+  <main class="content">
+    <!-- OVERVIEW -->
+    <section id="tab-overview" class="tab-pane">
+      <div class="wrap">
+        <div class="quote-pill">
+          "HỆ THỐNG ĐI TRƯỚC, TIỀN BẠC THEO SAU." - MARK MINERVINI
         </div>
 
-        <div id="tab-market" class="tab-content hidden grid grid-cols-1 md:grid-cols-3 gap-8 animate-in">
-            <div class="glass-panel p-8">
-                <p class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest">NGÀY PHÂN PHỐI (VNI)</p>
-                <h1 class="text-8xl font-black mb-8">0</h1>
-                <div class="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-2xl text-center">
-                    <p class="text-emerald-400 font-bold text-sm">XU HƯỚNG TĂNG</p>
-                    <p class="text-[10px] text-slate-400 italic">Thị trường chung ổn định.</p>
-                </div>
+        <div class="grid stats-4">
+          <div class="card stat glow-emerald">
+            <div class="stat-label">TÀI SẢN HIỆN TẠI</div>
+            <div class="stat-value" id="ov-balance">0₫</div>
+          </div>
+          <div class="card stat glow-sky">
+            <div class="stat-label">LỢI NHUẬN RÒNG</div>
+            <div class="stat-value text-emerald" id="ov-pnl">+0₫</div>
+          </div>
+          <div class="card stat glow-amber">
+            <div class="stat-label">TỶ LỆ THẮNG</div>
+            <div class="stat-value text-amber" id="ov-winrate">0%</div>
+          </div>
+          <div class="card stat glow-rose">
+            <div class="stat-label">MÃ ĐANG GIỮ</div>
+            <div class="stat-value text-rose" id="ov-holding">0</div>
+          </div>
+        </div>
+
+        <div class="card coach">
+          <div class="coach-left">
+            <div class="coach-title"><span class="spark">✦</span>AI TRADING COACH</div>
+            <div class="coach-sub">Nhấn nút để AI phân tích hiệu suất và kỷ luật của anh...</div>
+          </div>
+          <button class="btn btn-purple" id="btn-diagnose">CHẨN ĐOÁN PERFORMANCE</button>
+        </div>
+
+        <div class="grid ov-charts">
+          <div class="card chart-card">
+            <div class="card-head">
+              <span class="head-dot dot-emerald"></span>
+              <span class="head-text">TĂNG TRƯỞNG TÀI SẢN</span>
             </div>
-            <div class="glass-panel p-8 text-center">
-                <p class="text-xs font-bold text-slate-500 mb-6 uppercase tracking-widest text-left">TÂM LÝ BÁN NGUYỆT</p>
-                <div class="relative w-48 h-24 mx-auto mb-4">
-                    <canvas id="sentimentGauge"></canvas>
-                    <div class="absolute inset-0 flex items-end justify-center pb-2">
-                        <span class="text-2xl font-black">50</span>
-                    </div>
+            <div class="chart-box">
+              <canvas id="chart-equity"></canvas>
+            </div>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-head">
+              <span class="head-icon">◔</span>
+              <span class="head-text">PHÂN BỔ VỐN THỰC TẾ</span>
+            </div>
+            <div class="chart-box donut">
+              <canvas id="chart-allocation"></canvas>
+              <div class="legend-inline">
+                <span class="lg-item"><span class="lg-swatch sw-blue"></span>Tiền mặt</span>
+                <span class="lg-item"><span class="lg-swatch sw-green"></span>Cổ phiếu</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-title">HIỆU SUẤT THEO THÁNG</div>
+            <div class="table">
+              <div class="t-row t-head">
+                <div>THÁNG</div><div>LỆNH</div><div class="text-emerald">W</div><div class="text-rose">L</div><div class="text-right">PNL RÒNG</div>
+              </div>
+              <div id="ov-monthly-body"></div>
+            </div>
+          </div>
+
+          <div class="card list-card">
+            <div class="list-title">SETUP HIỆU QUẢ (% THẮNG)</div>
+            <div class="list" id="ov-setup-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARKET -->
+    <section id="tab-market" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="grid market-3">
+          <div class="card market-left glow-emerald">
+            <div class="market-title">NGÀY PHÂN PHỐI (VNI)</div>
+            <div class="dist-box">
+              <input id="mk-dist" type="number" min="0" max="10" value="0" class="dist-input" />
+            </div>
+            <div class="dist-status" id="mk-dist-status">
+              <div class="dist-status-title" id="mk-dist-title">XU HƯỚNG TĂNG</div>
+              <div class="dist-status-desc" id="mk-dist-desc">THỊ TRƯỜNG CHUNG ỔN ĐỊNH.</div>
+            </div>
+          </div>
+
+          <div class="card market-mid">
+            <div class="market-title center">TÂM LÝ BÁN NGUYỆT</div>
+            <div class="gauge-wrap">
+              <canvas id="chart-sentiment"></canvas>
+              <div class="gauge-center">
+                <div class="gauge-val" id="mk-sent-val">50</div>
+                <div class="gauge-sub" id="mk-sent-label">TRUNG LẬP</div>
+              </div>
+            </div>
+            <div class="select-row">
+              <select id="mk-sent-select" class="select">
+                <option value="20">😰 TRUNG LẬP → SỢ HÃI</option>
+                <option value="50" selected>🙂 TRUNG LẬP</option>
+                <option value="80">😎 TRUNG LẬP → THAM LAM</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card market-right">
+            <div class="market-title">DÒNG TIỀN VÀO</div>
+            <div class="market-actions">
+              <button class="btn btn-purple btn-sm">AI SUMMARY</button>
+            </div>
+            <div class="note-box">
+              <div class="note-placeholder">LƯU Ý CÁC NHÓM NGÀNH DẪN DẮT...</div>
+              <textarea id="mk-flow" class="textarea"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RADAR -->
+    <section id="tab-radar" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="radar-head">
+          <div class="radar-title">RADAR <span class="radar-sub">CENTER</span></div>
+          <button class="btn btn-blue">THÊM MÃ RADAR</button>
+        </div>
+
+        <div class="radar-section-label">GẦN ĐIỂM MUA (PIVOT)</div>
+        <div class="grid radar-cards" id="radar-cards"></div>
+
+        <div class="radar-section-label blue">ĐANG THEO DÕI</div>
+        <div class="radar-ghost"></div>
+
+        <div class="radar-section-label purple">DANH MỤC DÀI HẠN</div>
+        <div class="radar-ghost"></div>
+      </div>
+    </section>
+
+    <!-- ANALYSIS -->
+    <section id="tab-analysis" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="analysis-grid">
+          <aside class="card analysis-left">
+            <div class="side-title">HỆ THỐNG MẪU</div>
+            <div class="side-list">
+              <button class="side-item active">CỐC TAY CẦM</button>
+              <button class="side-item">NỀN GIÁ PHẲNG</button>
+              <button class="side-item">MÔ HÌNH VCP</button>
+              <button class="side-item">MÔ HÌNH 2 ĐÁY</button>
+              <button class="side-item">CHIẾC LÁ CỜ</button>
+            </div>
+          </aside>
+
+          <section class="card analysis-main">
+            <div class="analysis-head">
+              <div class="lab">LAB PHÂN TÍCH</div>
+              <button class="btn btn-purple btn-sm">AI GỢI Ý</button>
+            </div>
+
+            <div class="analysis-panels">
+              <div class="panel">
+                <div class="panel-title">BIỂU ĐỒ CHUẨN</div>
+                <div class="panel-body faint">PHÒNG PHÂN TÍCH</div>
+              </div>
+              <div class="panel">
+                <div class="panel-title blue">BIỂU ĐỒ THỰC TẾ</div>
+                <div class="panel-upload">
+                  <div class="upload-icon">🖼️</div>
+                  <div class="upload-text">TẢI BIỂU ĐỒ</div>
                 </div>
-                <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-8">TRUNG LẬP</p>
-                <select class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs outline-none">
-                    <option>😐 TRUNG LẬP</option>
-                    <option>😨 SỢ HÃI</option>
-                    <option>🤑 THAM LAM</option>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- CAPITAL -->
+    <section id="tab-capital" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="grid cap-2">
+          <div class="card cap-left glow-emerald">
+            <div class="cap-title">QUẢN LÝ VỐN</div>
+
+            <div class="cap-field">
+              <div class="cap-label">TỔNG VỐN ĐẦU TƯ (VNĐ)</div>
+              <input id="cap-total" type="number" value="2000000000" class="cap-input"/>
+            </div>
+
+            <div class="cap-field">
+              <div class="cap-label">SỐ LƯỢNG MÃ GIỮ (N)</div>
+              <input id="cap-n" type="number" min="1" max="10" value="5" class="cap-input"/>
+            </div>
+
+            <div class="cap-highlight">
+              <div class="cap-highlight-label">VỐN DỰ KIẾN CHO 1 CỔ PHIẾU (VỐN/N):</div>
+              <div class="cap-highlight-value" id="cap-per-stock">400.000.000₫</div>
+            </div>
+          </div>
+
+          <div class="card cap-right glow-sky">
+            <div class="cap-title">TÍNH VỊ THẾ RỦI RO</div>
+
+            <div class="cap-small">HỆ SỐ RỦI RO (%) - RISK PER TRADE</div>
+            <input id="cap-risk" type="number" min="1" max="5" value="2" class="cap-input center"/>
+
+            <div class="grid cap-prices">
+              <div class="cap-field">
+                <div class="cap-label">GIÁ MUA</div>
+                <input id="cap-buy" type="number" value="100000" class="cap-input center"/>
+              </div>
+              <div class="cap-field">
+                <div class="cap-label">DỪNG LỖ (SL)</div>
+                <input id="cap-sl" type="number" value="93000" class="cap-input center"/>
+              </div>
+            </div>
+
+            <div class="cap-sep"></div>
+
+            <div class="cap-big-label">SỐ LƯỢNG NÊN VÀO LỆNH:</div>
+            <div class="cap-big" id="cap-shares">1.142 CP</div>
+
+            <div class="cap-foot">
+              <span id="cap-risk-amt">RỦI RO: 0₫</span>
+              <span class="dot">|</span>
+              <span id="cap-value-amt">TRỊ GIÁ: 0₫</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOURNAL -->
+    <section id="tab-journal" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="card journal-card">
+          <div class="journal-head">
+            <button class="btn btn-green" id="btn-add-trade">THÊM LỆNH MỚI</button>
+            <div class="journal-total" id="jl-total">0₫</div>
+          </div>
+
+          <div class="journal-table">
+            <div class="jr jr-head">
+              <div>NGÀY</div><div>MÃ CP</div><div>CHART</div><div>MÔ HÌNH</div><div>SL</div><div>GIÁ VỐN</div><div>GIÁ CHỐT</div><div>PNL</div><div class="text-rose">BACKTEST</div><div>XỬ LÝ</div>
+            </div>
+            <div id="jl-rows"></div>
+          </div>
+        </div>
+
+        <div id="trade-modal" class="modal hidden">
+          <div class="modal-backdrop"></div>
+          <div class="modal-card">
+            <div class="modal-title">THÊM LỆNH</div>
+            <div class="grid modal-grid">
+              <label class="mfield">Ngày<input id="m-date" type="date" class="minput"/></label>
+              <label class="mfield">Mã<input id="m-ticker" type="text" class="minput uppercase" placeholder="FPT"/></label>
+              <label class="mfield">Mô hình
+                <select id="m-setup" class="minput">
+                  <option>NỀN GIÁ PHẲNG</option>
+                  <option>CỐC TAY CẦM</option>
+                  <option>VCP</option>
+                  <option>MÔ HÌNH 2 ĐÁY</option>
+                  <option>CHIẾC LÁ CỜ</option>
                 </select>
+              </label>
+              <label class="mfield">SL<input id="m-qty" type="number" class="minput"/></label>
+              <label class="mfield">Giá vốn<input id="m-buy" type="number" class="minput"/></label>
+              <label class="mfield">Giá chốt<input id="m-sell" type="number" class="minput" placeholder="0 nếu đang giữ"/></label>
             </div>
-            <div class="glass-panel p-8 flex flex-col">
-                <div class="flex justify-between items-center mb-6">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">DÒNG TIỀN VÀO</p>
-                    <button class="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-1 rounded text-[10px] font-bold">✨ AI SUMMARY</button>
-                </div>
-                <textarea class="flex-1 bg-black/20 p-4 rounded-2xl border border-white/5 text-sm resize-none" placeholder="LƯU Ý CÁC NHÓM NGÀNH DẪN DẮT..."></textarea>
+            <div class="modal-actions">
+              <button class="btn btn-ghost" id="btn-cancel">HỦY</button>
+              <button class="btn btn-green" id="btn-save">LƯU</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PATTERNS -->
+    <section id="tab-patterns" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="patterns-head">
+          <div class="patterns-title">THƯ VIỆN MẪU HÌNH CHUẨN (WIKI)</div>
+          <button class="btn btn-green">TẠO MỚI</button>
+        </div>
+        <div class="grid patterns-grid" id="patterns-grid"></div>
+      </div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section id="tab-library" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="patterns-head">
+          <div class="patterns-title">KINH NGHIỆM & CASE STUDY</div>
+          <button class="btn btn-blue">THÊM BÀI HỌC</button>
+        </div>
+        <div class="grid lib-grid" id="lib-grid"></div>
+      </div>
+    </section>
+
+    <!-- TRAINING -->
+    <section id="tab-training" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="card training-card">
+          <div class="training-text">HỆ THỐNG ĐANG NẠP BÀI TRẮC NGHIỆM THỊ GIÁC MẪU HÌNH...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PSYCHOLOGY -->
+    <section id="tab-psychology" class="tab-pane hidden">
+      <div class="wrap">
+        <div class="grid psy-2">
+          <div class="card psy-card glow-rose">
+            <div class="psy-title">1. NỖI SỢ & BUÔNG BỎ</div>
+            <div class="psy-text">GIẢI PHÁP: DIỄN TẬP TÌNH HUỐNG TRƯỚC CÁC KHOẢN LỖ VÀ CHẤP NHẬN CHÚNG. KHI KHÔNG CÒN COI TRỌNG KẾT QUẢ LỆNH, NỖI SỢ SẼ BIẾN MẤT.</div>
+          </div>
+
+          <div class="card psy-card glow-amber">
+            <div class="psy-title">2. QUY TRÌNH &gt; KẾT QUẢ</div>
+            <div class="psy-text">TIỀN BẠC LÀ HỆ QUẢ CỦA VIỆC THỰC HIỆN QUY TRÌNH TỐT. TẬP TRUNG VÀO TIỀN CHỈ LÀM XAO NHÃNG. HÃY TẬP TRUNG VÀO VIỆC RA QUYẾT ĐỊNH ĐÚNG CHUẨN.</div>
+          </div>
+
+          <div class="card psy-card glow-purple">
+            <div class="psy-title">4. TRÒ CHƠI XÁC SUẤT</div>
+            <div class="psy-text">KHÔNG CÓ GÌ CHẮC CHẮN 100%. ĐỪNG ĐỂ VÀI LỆNH THUA LIÊN TIẾP PHÁ HỦY SỰ TỰ TIN. HÃY CÓ CÁI NHÌN TỔNG QUAN DÀI HẠN TRÊN HÀNG TRĂM GIAO DỊCH.</div>
+          </div>
+
+          <div class="card psy-card glow-emerald">
+            <div class="psy-title">5. NGHI THỨC BUỔI SÁNG</div>
+            <ul class="psy-list">
+              <li>CẢM NHẬN ĐIỀU TỐT ĐẸP HÔM QUA.</li>
+              <li>RÚT RA 2-3 BÀI HỌC QUAN TRỌNG NHẤT.</li>
+              <li>HỎI: “LÀM THẾ NÀO ĐỂ TỐT HƠN HÔM NAY?”</li>
+            </ul>
+          </div>
         </div>
 
-        <div id="tab-radar" class="tab-content hidden space-y-12 animate-in">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-black tracking-tight font-mono">RADAR CENTER</h2>
-                <button class="btn-primary">THÊM MÃ RADAR</button>
+        <div class="breath-wrap">
+          <div class="breath-title">BÀI TẬP GIẢI TỎA ÁP LỰC: HÍT THỞ 4-7-8</div>
+          <div class="breath-ring" id="breath-ring">
+            <div class="breath-center">
+              <div class="breath-state" id="breath-state">READY</div>
+              <div class="breath-count" id="breath-count">0</div>
             </div>
-            <div>
-                <p class="text-emerald-400 text-[10px] font-black tracking-[0.3em] mb-6">GẦN ĐIỂM MUA (PIVOT)</p>
-                <div id="radar-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    </div>
-            </div>
-            <p class="text-blue-400 text-[10px] font-black tracking-[0.3em]">ĐANG THEO DÕI</p>
-            <p class="text-purple-400 text-[10px] font-black tracking-[0.3em]">DANH MỤC DÀI HẠN</p>
-        </div>
+          </div>
 
-        <div id="tab-analysis" class="tab-content hidden flex gap-8 h-full animate-in">
-            <div class="w-48 shrink-0 flex flex-col gap-4">
-                <p class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">HỆ THỐNG MẪU</p>
-                <div id="analysis-menu" class="space-y-2 overflow-y-auto no-scrollbar"></div>
-            </div>
-            <div class="flex-1 glass-panel flex flex-col relative overflow-hidden">
-                <div class="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
-                    <p class="text-[10px] font-black text-emerald-400 tracking-widest">LAB PHÂN TÍCH</p>
-                    <button class="btn-ai text-[10px] py-1">✨ AI GỢI Ý</button>
-                </div>
-                <div class="flex-1 p-8 grid grid-cols-2 gap-8 text-center relative">
-                    <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-                        <h1 class="text-4xl font-black">PHÒNG PHÂN TÍCH</h1>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-500 mb-6 tracking-[0.4em]">BIỂU ĐỒ CHUẨN</p>
-                        <div class="w-full h-full min-h-[300px] bg-black/40 rounded-[40px] border border-white/5 flex items-center justify-center">
-                            <img id="ana-standard" class="max-w-full max-h-full object-contain p-4 hidden">
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-blue-400 mb-6 tracking-[0.4em]">BIỂU ĐỒ THỰC TẾ</p>
-                        <div class="w-full h-full min-h-[300px] bg-black/40 rounded-[40px] border border-white/5 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-black/60 transition">
-                            <i data-lucide="image-plus" class="w-12 h-12 text-blue-500/50"></i>
-                            <p class="text-[10px] font-bold text-slate-500 uppercase">TẢI BIỂU ĐỒ</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+          <div class="breath-notes">
+            <div class="n1">HÍT VÀO (4S): HÍT SAU QUA MŨI, BỤNG PHÌNH TO.</div>
+            <div class="n2">NÍN THỞ (7S): GIỮ LẠI HƠI THỞ, TẬP TRUNG VÀO SỰ TĨNH LẶNG.</div>
+            <div class="n3">THỞ RA (8S): THỞ MẠNH QUA MIỆNG, ĐẨY HẾT KHÍ ĐỘC RA NGOÀI.</div>
+          </div>
 
-        <div id="tab-capital" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-8 animate-in">
-            <div class="glass-panel p-10 border-l-4 border-emerald-500">
-                <h3 class="flex items-center gap-3 text-xs font-bold mb-10"><i data-lucide="wallet"></i> QUẢN LÝ VỐN</h3>
-                <div class="space-y-12">
-                    <div class="text-center">
-                        <label class="text-[10px] text-slate-500 uppercase tracking-widest mb-4 block">TỔNG VỐN ĐẦU TƯ (VNĐ)</label>
-                        <input type="number" id="inp-total-cap" value="2000000000" class="bg-black/40 text-4xl font-black w-full text-center p-6 rounded-3xl border border-white/5 outline-none font-mono">
-                    </div>
-                    <div class="text-center">
-                        <label class="text-[10px] text-slate-500 uppercase tracking-widest mb-4 block">SỐ LƯỢNG MÃ GIỮ (N)</label>
-                        <input type="number" id="inp-stock-n" value="5" class="bg-black/40 text-4xl font-black w-full text-center p-6 rounded-3xl border border-white/5 outline-none font-mono">
-                    </div>
-                    <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-[40px] p-10 text-center">
-                        <p class="text-[10px] text-slate-500 mb-4 uppercase">Vốn dự kiến cho 1 cổ phiếu (Vốn/N):</p>
-                        <h1 class="text-4xl font-black text-emerald-400 font-mono" id="val-cap-per-stock">400.000.000Đ</h1>
-                    </div>
-                </div>
-            </div>
-            <div class="glass-panel p-10 border-l-4 border-blue-500 bg-blue-500/5">
-                <h3 class="flex items-center gap-3 text-xs font-bold mb-10"><i data-lucide="calculator"></i> TÍNH VỊ THẾ RỦI RO</h3>
-                <div class="space-y-8">
-                    <div class="text-center">
-                        <label class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-4 block">HỆ SỐ RỦI RO (%) - RISK PER TRADE</label>
-                        <input type="number" id="inp-risk-pct" value="2" class="bg-black/40 text-4xl font-black w-full text-center p-6 rounded-3xl border border-blue-500/20 text-blue-400 outline-none font-mono">
-                    </div>
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="text-center">
-                            <label class="text-[10px] text-slate-500 mb-4 block">GIÁ MUA</label>
-                            <input type="number" id="inp-buy-price" value="100000" class="bg-black/40 text-2xl font-black w-full text-center p-6 rounded-3xl border border-white/5 outline-none font-mono">
-                        </div>
-                        <div class="text-center">
-                            <label class="text-[10px] text-slate-500 mb-4 block">DỪNG LỖ (SL)</label>
-                            <input type="number" id="inp-sl-price" value="93000" class="bg-black/40 text-2xl font-black w-full text-center p-6 rounded-3xl border border-white/5 outline-none font-mono">
-                        </div>
-                    </div>
-                    <div class="text-center pt-10 border-t border-white/5">
-                        <p class="text-[10px] text-slate-500 mb-6 uppercase tracking-[0.3em]">SỐ LƯỢNG NÊN VÀO LỆNH:</p>
-                        <h1 class="text-7xl font-black text-emerald-400 mb-10" id="val-position-size">1.142 CP</h1>
-                        <p class="text-xs font-mono text-slate-400 border border-white/10 inline-block px-8 py-3 rounded-full bg-black/40" id="val-risk-summary">RỦI RO: 8.000.000Đ | TRỊ GIÁ: 114.200.000Đ</p>
-                    </div>
-                </div>
-            </div>
+          <button class="btn btn-blue btn-lg" id="btn-breath">BẮT ĐẦU LUYỆN TẬP</button>
         </div>
+      </div>
+    </section>
+  </main>
 
-        <div id="tab-journal" class="tab-content hidden space-y-6 animate-in">
-            <div class="flex justify-between items-center">
-                <button class="btn-primary px-8">THÊM LỆNH MỚI</button>
-                <h1 class="text-4xl font-black text-emerald-500">0đ</h1>
-            </div>
-            <div class="glass-panel overflow-hidden border border-white/5">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-black/40 text-slate-500 font-bold uppercase">
-                        <tr>
-                            <th class="p-5">NGÀY</th>
-                            <th class="p-5">MÃ CP</th>
-                            <th class="p-5 text-center">CHART</th>
-                            <th class="p-5">MÔ HÌNH</th>
-                            <th class="p-5 text-center">SL</th>
-                            <th class="p-5 text-right">GIÁ VỐN</th>
-                            <th class="p-5 text-right">GIÁ CHỐT</th>
-                            <th class="p-5 text-right">PNL</th>
-                            <th class="p-5 text-center text-rose-500">BACKTEST</th>
-                            <th class="p-5 text-center">XỬ LÝ</th>
-                        </tr>
-                    </thead>
-                    <tbody id="journal-list" class="divide-y divide-white/5 font-bold">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-wiki" class="tab-content hidden space-y-12 animate-in">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xs font-black text-emerald-400 tracking-[0.4em] uppercase">THƯ VIỆN MẪU HÌNH CHUẨN (WIKI)</h2>
-                <button class="btn-primary text-xs py-2">TẠO MỚI</button>
-            </div>
-            <div id="wiki-grid" class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                </div>
-        </div>
-
-        <div id="tab-library" class="tab-content hidden space-y-12 animate-in">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xs font-black text-emerald-400 tracking-[0.4em] uppercase">KINH NGHIỆM & CASE STUDY</h2>
-                <button class="bg-blue-500 text-white rounded-xl px-6 py-2 text-xs font-black shadow-lg shadow-blue-500/20">THÊM BÀI HỌC</button>
-            </div>
-            <div id="library-grid" class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                </div>
-        </div>
-
-        <div id="tab-training" class="tab-content hidden h-[400px] flex items-center justify-center animate-in">
-            <div class="glass-panel p-20 text-center border-emerald-500/20">
-                <p class="font-black text-slate-400 uppercase tracking-widest">HỆ THỐNG ĐANG NẠP BÀI TRẮC NGHIỆM THỊ GIÁC MẪU HÌNH...</p>
-            </div>
-        </div>
-
-        <div id="tab-psychology" class="tab-content hidden space-y-12 animate-in text-center">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-                <div class="glass-panel p-8 border-l-4 border-rose-500">
-                    <h3 class="font-bold text-sm mb-4"><i data-lucide="shield-off" class="w-4 h-4 inline mr-2 text-rose-500"></i> 1. NỖI SỢ & BUÔNG BỎ</h3>
-                    <p class="text-xs text-slate-300 italic leading-relaxed">GIẢI PHÁP: DIỄN TẬP TINH THẦN. HÌNH DUNG TRƯỚC CÁC KHOẢN LỖ VÀ CHẤP NHẬN CHÚNG. KHI KHÔNG QUÁ COI TRỌNG KẾT QUẢ LỆNH, NỖI SỢ SẼ BIẾN MẤT.</p>
-                </div>
-                <div class="glass-panel p-8 border-l-4 border-amber-500">
-                    <h3 class="font-bold text-sm mb-4"><i data-lucide="target" class="w-4 h-4 inline mr-2 text-amber-500"></i> 2. QUY TRÌNH > KẾT QUẢ</h3>
-                    <p class="text-xs text-slate-300 italic leading-relaxed">TIỀN BẠC LÀ HỆ QUẢ CỦA VIỆC THỰC HIỆN QUY TRÌNH TỐT. TẬP TRUNG VÀO TIỀN CHỈ LÀM XAO NHÃNG. HÃY TẬP TRUNG VÀO VIỆC RA QUYẾT ĐỊNH ĐÚNG CHUẨN.</p>
-                </div>
-                <div class="glass-panel p-8 border-l-4 border-purple-500">
-                    <h3 class="font-bold text-sm mb-4">4. TRÒ CHƠI XÁC SUẤT</h3>
-                    <p class="text-xs text-slate-300 italic leading-relaxed">KHÔNG CÓ GÌ CHẮC CHẮN 100%. ĐỪNG ĐỂ VÀI LỆNH THUA LIÊN TIẾP PHÁ HỦY SỰ TỰ TIN. HÃY GIỮ CÁI NHÌN TỔNG QUAN DÀI HẠN TRÊN HÀNG TRĂM GIAO DỊCH.</p>
-                </div>
-                <div class="glass-panel p-8 border-l-4 border-emerald-500">
-                    <h3 class="font-bold text-sm mb-4">5. NGHI THỨC BUỔI SÁNG</h3>
-                    <ul class="text-[10px] text-slate-400 space-y-2 list-disc pl-4 italic">
-                        <li>CẢM NHẬN ĐIỀU TỐT ĐẸP HÔM QUA.</li>
-                        <li>RÚT RA 2-3 BÀI HỌC QUAN TRỌNG NHẤT.</li>
-                        <li>HỎI: "LÀM THẾ NÀO ĐỂ TỐT HƠN HÔM NAY?"</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="py-12 flex flex-col items-center">
-                <p class="text-blue-400 text-[10px] font-black tracking-widest mb-10">BÀI TẬP GIẢI TỎA ÁP LỰC: HÍT THỞ 4-7-8</p>
-                <div class="relative w-64 h-64 flex items-center justify-center">
-                    <div id="breath-circle" class="absolute inset-0 rounded-full border-4 border-blue-500/20 scale-100 transition-all duration-[4000ms]"></div>
-                    <div class="text-center z-10">
-                        <h1 class="text-4xl font-black mb-1" id="breath-status">READY</h1>
-                        <p class="text-6xl font-mono font-black text-blue-500" id="breath-timer">0</p>
-                    </div>
-                </div>
-                <div class="mt-12 text-[10px] text-slate-500 space-y-2 uppercase">
-                    <p><span class="text-emerald-400">HÍT VÀO (4S):</span> HÍT SÂU QUA MŨI, BỤNG PHÌNH TO.</p>
-                    <p><span class="text-amber-400">NÍN THỞ (7S):</span> GIỮ LẠI HƠI THỞ, TẬP TRUNG VÀO SỰ TĨNH LẶNG.</p>
-                    <p><span class="text-rose-400">THỞ RA (8S):</span> THỞ MẠNH QUA MIỆNG, ĐẨY HẾT KHÍ ĐỘC RA NGOÀI.</p>
-                </div>
-                <button onclick="startBreathing()" class="mt-12 bg-blue-600 text-white font-black px-12 py-4 rounded-full shadow-2xl shadow-blue-500/20 active:scale-95 transition">BẮT ĐẦU LUYỆN TẬP</button>
-            </div>
-        </div>
-    </main>
-
-    <script src="app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
