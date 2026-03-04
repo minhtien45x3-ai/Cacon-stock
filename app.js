@@ -1,245 +1,167 @@
-// State Management
-let state = {
-    capital: 2000000000,
-    stockCount: 5,
-    journal: [
-        { id: 1, date: '2026-03-01', ticker: 'FPT', setup: 'Nền giá phẳng', qty: 2000, buyPrice: 130000, sellPrice: 145000, pnl: 29910000 },
-        { id: 2, date: '2026-02-15', ticker: 'MWG', setup: 'Cốc tay cầm', qty: 5000, buyPrice: 62000, sellPrice: 58000, pnl: -20000000 },
-        { id: 3, date: '2026-03-03', ticker: 'TCB', setup: 'VCP', qty: 10000, buyPrice: 42000, sellPrice: 0, pnl: 0 },
-        { id: 4, date: '2026-02-20', ticker: 'DGC', setup: 'Nền giá phẳng', qty: 3000, buyPrice: 110000, sellPrice: 125000, pnl: 44800000 }
-    ],
-    charts: {}
+// --- State & Config ---
+let totalCapital = 2000000000;
+let stockCount = 5;
+let journalData = [
+    { id: 1, date: '2026-03-01', ticker: 'FPT', setup: 'Nền giá phẳng', qty: 1000, buyPrice: 135000, sellPrice: 156000, pnl: 20532000 },
+    { id: 2, date: '2026-02-15', ticker: 'TCB', setup: 'Mô hình 2 đáy', qty: 5000, buyPrice: 42000, sellPrice: 48000, pnl: 29856000 }
+];
+
+let charts = {};
+
+// --- Initialization ---
+window.onload = function() {
+    lucide.createIcons();
+    initCharts();
+    updateCapital();
 };
 
-// Initialize Application
-document.addEventListener('DOMContentLoaded', () => {
-    initDate();
-    initCharts();
-    updateDashboard();
-    evaluateMarketRisk();
-});
-
-function initDate() {
-    const d = new Date();
-    const dateStr = d.toISOString().split('T')[0];
-    const dateInput = document.getElementById('form-date');
-    if (dateInput) dateInput.value = dateStr;
+function formatNum(num) { 
+    return parseFloat(num).toLocaleString('vi-VN', { maximumFractionDigits: 0 }); 
 }
 
-// Navigation Logic
+// --- Navigation ---
 function switchTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.remove('block');
-        el.classList.add('hidden');
-    });
-    
-    const target = document.getElementById('tab-' + tabId);
-    if (target) {
-        target.classList.remove('hidden');
-        target.classList.add('block', 'animate-fade-in');
-    }
-
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('tab-' + tabId).classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('btn-' + tabId).classList.add('active');
 
-    // Trigger chart updates when switching to dashboard
-    if (tabId === 'dashboard') {
-        Object.values(state.charts).forEach(chart => chart.update());
-    }
+    if(tabId === 'dashboard') Object.values(charts).forEach(c => c.update());
 }
 
-// Position Calculator Logic
-function calculatePosition() {
-    const riskPct = parseFloat(document.getElementById('calc-risk-coeff').value) / 100;
-    const buyP = parseFloat(document.getElementById('calc-buy-price').value);
-    const slP = parseFloat(document.getElementById('calc-sl-price').value);
-    
-    const resVol = document.getElementById('calc-result-volume');
-    const resVal = document.getElementById('calc-result-value');
-
-    if (!buyP || !slP || buyP <= slP) {
-        alert("Kiểm tra lại giá mua và giá dừng lỗ!");
-        return;
-    }
-
-    const capitalPerTrade = state.capital / state.stockCount;
-    const maxRiskAmount = state.capital * riskPct;
-    const riskPerShare = buyP - slP;
-
-    let sharesBasedOnRisk = Math.floor(maxRiskAmount / riskPerShare);
-    let sharesBasedOnCapital = Math.floor(capitalPerTrade / buyP);
-
-    const finalShares = Math.min(sharesBasedOnRisk, sharesBasedOnCapital);
-    const tradeValue = finalShares * buyP;
-
-    resVol.innerText = formatNum(finalShares) + " CP";
-    resVal.innerText = `Giá trị: ${formatNum(tradeValue)}đ (Rủi ro: ${formatNum(finalShares * riskPerShare)}đ)`;
-    document.getElementById('calc-result-panel').classList.remove('hidden');
-}
-
-// System Config
-function updateSystemCapital() {
-    const cap = document.getElementById('config-capital').value;
-    const count = document.getElementById('config-stock-count').value;
-    if (cap) state.capital = parseFloat(cap);
-    if (count) state.stockCount = parseInt(count);
-    updateDashboard();
-    alert("Đã cập nhật cấu hình hệ thống!");
-}
-
-// Journal Actions
-function addTrade() {
-    const ticker = document.getElementById('form-ticker').value.toUpperCase();
-    const qty = parseFloat(document.getElementById('form-qty').value);
-    const buyPrice = parseFloat(document.getElementById('form-buy').value);
-    const sellPrice = parseFloat(document.getElementById('form-sell').value) || 0;
-
-    if (!ticker || !qty || !buyPrice) return alert("Vui lòng điền đủ thông tin cơ bản!");
-
-    let pnl = 0;
-    if (sellPrice > 0) {
-        pnl = (qty * sellPrice) - (qty * buyPrice);
-        pnl -= (qty * sellPrice * 0.003); // Thuế phí ước tính
-    }
-
-    state.journal.unshift({
-        id: Date.now(),
-        date: document.getElementById('form-date').value,
-        ticker,
-        setup: document.getElementById('form-setup').value,
-        qty,
-        buyPrice,
-        sellPrice,
-        pnl
-    });
-
-    updateDashboard();
-    // Clear inputs
-    ['form-ticker', 'form-qty', 'form-buy', 'form-sell'].forEach(id => document.getElementById(id).value = '');
-}
-
-function deleteTrade(id) {
-    if (confirm("Xóa giao dịch này?")) {
-        state.journal = state.journal.filter(t => t.id !== id);
-        updateDashboard();
-    }
-}
-
-// UI Refresh
-function updateDashboard() {
-    const closed = state.journal.filter(t => t.sellPrice > 0);
-    const open = state.journal.filter(t => t.sellPrice === 0);
+// --- Dashboard Logic ---
+function updateUI() {
+    const closed = journalData.filter(t => t.sellPrice > 0);
     const totalPnL = closed.reduce((acc, curr) => acc + curr.pnl, 0);
     
-    document.getElementById('dash-balance').innerText = formatNum(state.capital + totalPnL) + 'đ';
+    document.getElementById('dash-balance').innerText = formatNum(totalCapital + totalPnL) + 'đ';
     document.getElementById('dash-pnl').innerText = (totalPnL >= 0 ? '+' : '') + formatNum(totalPnL) + 'đ';
-    document.getElementById('dash-pnl').style.color = totalPnL >= 0 ? '#059669' : '#e11d48';
+    document.getElementById('dash-pnl').style.color = totalPnL >= 0 ? '#10b981' : '#f43f5e';
     
     const winRate = closed.length ? Math.round((closed.filter(t => t.pnl > 0).length / closed.length) * 100) : 0;
     document.getElementById('dash-winrate').innerText = winRate + '%';
-    document.getElementById('dash-holding').innerText = open.length;
+    document.getElementById('dash-holding').innerText = journalData.filter(t => t.sellPrice === 0).length;
 
-    renderTable();
-    updateAllocation(open);
+    updateAllocationChart();
 }
 
-function renderTable() {
-    const tbody = document.getElementById('journal-table-body');
-    tbody.innerHTML = state.journal.map(t => `
-        <tr class="hover:bg-stone-50 transition">
-            <td class="p-4 border-b font-mono">${t.date}</td>
-            <td class="p-4 border-b font-black">${t.ticker}</td>
-            <td class="p-4 border-b text-[10px] uppercase font-bold">${t.setup}</td>
-            <td class="p-4 border-b text-right">${formatNum(t.qty)}</td>
-            <td class="p-4 border-b text-right">${formatNum(t.buyPrice)}</td>
-            <td class="p-4 border-b text-right">${t.sellPrice > 0 ? formatNum(t.sellPrice) : '<span class="text-blue-500">OPEN</span>'}</td>
-            <td class="p-4 border-b text-right font-bold ${t.pnl >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${t.sellPrice > 0 ? formatNum(t.pnl) : '---'}</td>
-            <td class="p-4 border-b text-center"><button onclick="deleteTrade(${t.id})">🗑️</button></td>
-        </tr>
-    `).join('');
-    document.getElementById('total-trades-count').innerText = `${state.journal.length} Lệnh`;
+// --- Calculation Logic ---
+function updateCapital() {
+    totalCapital = parseFloat(document.getElementById('config-capital').value) || 0;
+    stockCount = parseInt(document.getElementById('config-stock-count').value) || 1;
+    document.getElementById('cap-per-stock').innerText = formatNum(totalCapital / stockCount) + 'đ';
+    updateUI();
 }
 
-// Market Risk & Sentiment
-function evaluateMarketRisk() {
+function runCalculation() {
+    const buyP = parseFloat(document.getElementById('calc-buy-price').value) || 0;
+    const slP = parseFloat(document.getElementById('calc-sl-price').value) || 0;
+    const riskPct = (parseFloat(document.getElementById('calc-risk-coeff').value) || 2) / 100;
+    
+    if(buyP > slP && buyP > 0) {
+        const riskAmt = totalCapital * riskPct;
+        const vol = Math.floor(riskAmt / (buyP - slP));
+        const maxVolByCap = Math.floor((totalCapital / stockCount) / buyP);
+        const finalVol = Math.min(vol, maxVolByCap);
+
+        document.getElementById('calc-result-volume').innerText = formatNum(finalVol) + " CP";
+        document.getElementById('calc-result-value').innerText = `Trị giá: ${formatNum(finalVol * buyP)}đ | Rủi ro thực: ${formatNum(finalVol * (buyP - slP))}đ`;
+    }
+}
+
+// --- Market Warning ---
+function updateDistWarning() {
     const days = parseInt(document.getElementById('market-dist-days').value) || 0;
-    const status = document.getElementById('dist-status');
-    const action = document.getElementById('dist-action');
-    const card = document.getElementById('dist-card');
-
+    const box = document.getElementById('dist-alert-box');
+    const title = document.getElementById('dist-alert-title');
+    
     if (days <= 2) {
-        status.innerText = "XU HƯỚNG TĂNG";
-        status.className = "text-lg font-black text-emerald-600";
-        action.innerText = "Duy trì quy mô bình thường.";
-        card.style.borderTopColor = "#10b981";
+        title.innerText = "XU HƯỚNG TĂNG";
+        box.className = "mt-4 p-5 rounded-[24px] bg-emerald-500/10 border border-emerald-500/20 text-center";
     } else if (days >= 5) {
-        status.innerText = "NGUY HIỂM CỰC ĐỘ";
-        status.className = "text-lg font-black text-rose-600";
-        action.innerText = "ĐƯA VỀ 100% TIỀN MẶT!";
-        card.style.borderTopColor = "#e11d48";
+        title.innerText = "NGUY HIỂM - 100% TIỀN MẶT";
+        box.className = "mt-4 p-5 rounded-[24px] bg-rose-600/20 border border-rose-600/50 text-center animate-pulse";
     } else {
-        status.innerText = "THẬN TRỌNG";
-        status.className = "text-lg font-black text-amber-600";
-        action.innerText = "Hạ margin, bảo vệ lợi nhuận.";
-        card.style.borderTopColor = "#f59e0b";
+        title.innerText = "THẬN TRỌNG - GIẢM TỶ TRỌNG";
+        box.className = "mt-4 p-5 rounded-[24px] bg-amber-500/10 border border-amber-500/20 text-center";
     }
 }
 
-function updateSentiment() {
-    const val = document.getElementById('sentiment-slider').value;
-    document.getElementById('sentiment-val-display').innerText = val;
-    if (state.charts.sentiment) {
-        state.charts.sentiment.data.datasets[0].data = [val, 100 - val];
-        state.charts.sentiment.update();
-    }
-}
-
-// Chart Initializations
+// --- Charts ---
 function initCharts() {
     const ctxE = document.getElementById('equity-chart').getContext('2d');
-    state.charts.equity = new Chart(ctxE, {
+    charts.equity = new Chart(ctxE, {
         type: 'line',
         data: {
-            labels: ['Khởi tạo', 'Tháng 1', 'Tháng 2', 'Hiện tại'],
+            labels: ['Jan', 'Feb', 'Mar'],
             datasets: [{
-                data: [2000000000, 2010000000, 1980000000, 2054710000],
-                borderColor: '#059669',
-                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                data: [2000000000, 2050000000, 2100000000],
+                borderColor: '#10b981',
+                tension: 0.4,
                 fill: true,
-                tension: 0.3
+                backgroundColor: 'rgba(16, 185, 129, 0.05)'
             }]
         },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
     });
 
     const ctxA = document.getElementById('allocation-chart').getContext('2d');
-    state.charts.allocation = new Chart(ctxA, {
+    charts.allocation = new Chart(ctxA, {
         type: 'doughnut',
         data: {
             labels: ['Tiền mặt', 'Cổ phiếu'],
-            datasets: [{ data: [100, 0], backgroundColor: ['#e7e5e4', '#0ea5e9'], borderWidth: 0 }]
+            datasets: [{ data: [60, 40], backgroundColor: ['#3b82f6', '#10b981'], borderWidth: 0 }]
         },
         options: { cutout: '75%', plugins: { legend: { position: 'bottom' } } }
     });
-
-    const ctxS = document.getElementById('sentiment-gauge').getContext('2d');
-    state.charts.sentiment = new Chart(ctxS, {
-        type: 'doughnut',
-        data: {
-            datasets: [{ data: [50, 50], backgroundColor: ['#3b82f6', '#f5f5f4'], circumference: 180, rotation: 270 }]
-        },
-        options: { cutout: '80%', plugins: { tooltip: { enabled: false } } }
-    });
 }
 
-function updateAllocation(openTrades) {
-    if (!state.charts.allocation) return;
-    const invested = openTrades.reduce((acc, curr) => acc + (curr.qty * curr.buyPrice), 0);
-    const cash = Math.max(0, state.capital - invested);
-    state.charts.allocation.data.datasets[0].data = [cash, invested];
-    state.charts.allocation.update();
+function updateAllocationChart() {
+    if (!charts.allocation) return;
+    const invested = journalData.filter(t => t.sellPrice === 0).reduce((acc, curr) => acc + (curr.qty * curr.buyPrice), 0);
+    charts.allocation.data.datasets[0].data = [totalCapital - invested, invested];
+    charts.allocation.update();
 }
 
-function formatNum(n) {
-    return parseFloat(n).toLocaleString('vi-VN');
+// --- Psychology: Breathing ---
+let isBreathing = false;
+function toggleBreathing() {
+    const circle = document.getElementById('breathing-circle');
+    const status = document.getElementById('breathing-status');
+    const timer = document.getElementById('breathing-timer');
+    const btn = document.getElementById('breath-toggle-btn');
+
+    if(isBreathing) { location.reload(); return; }
+    isBreathing = true;
+    btn.innerText = "DỪNG LẠI";
+
+    let step = 0;
+    const stages = [
+        { name: 'HÍT VÀO', time: 4, class: 'stage-inhale' },
+        { name: 'NÍN THỞ', time: 7, class: 'stage-hold' },
+        { name: 'THỞ RA', time: 8, class: 'stage-exhale' }
+    ];
+
+    const run = () => {
+        const s = stages[step];
+        status.innerText = s.name;
+        circle.className = 'breathing-circle-outer ' + s.class;
+        let t = s.time;
+        timer.innerText = t;
+        const interval = setInterval(() => {
+            t--;
+            timer.innerText = t;
+            if(t <= 0) {
+                clearInterval(interval);
+                step = (step + 1) % 3;
+                run();
+            }
+        }, 1000);
+    };
+    run();
+}
+
+// --- AI Coaching (Placeholder for environment) ---
+async function getAICoachAdvice() {
+    document.getElementById('ai-coach-text').innerText = "✨ AI: Hãy kiên nhẫn, thị trường đang tích lũy tốt. Giữ đúng kỷ luật cắt lỗ 7%.";
 }
