@@ -1,70 +1,217 @@
 <!DOCTYPE html>
-<html lang="vi" class="dark">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaCon Stock Pro</title>
+    <title>Hệ Thống Quản Trị Đầu Tư Thông Minh</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
-    <div class="global-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
 
-    <header class="h-16 border-b border-white/10 bg-black/20 backdrop-blur-lg flex items-center justify-between px-6 shrink-0 z-50 shadow-xl">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.reload()">
-            <div class="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/20"><i data-lucide="line-chart" class="text-emerald-400 w-6 h-6"></i></div>
-            <h1 class="text-xl font-black tracking-tighter text-white uppercase font-mono">CaCon <span class="text-emerald-500">Stock</span></h1>
+    <header class="h-16 border-b border-stone-200 bg-white flex items-center justify-between px-6 shrink-0 z-50 shadow-sm font-bold uppercase tracking-wider">
+        <div class="flex items-center gap-3">
+            <div class="text-xl">📈</div>
+            <h1 class="text-lg font-black text-stone-800 font-mono">CaCon <span class="text-emerald-600">Stock</span></h1>
         </div>
-        <nav class="flex gap-2 overflow-x-auto no-scrollbar">
-            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active px-3 py-2 text-[10px] font-black uppercase whitespace-nowrap">Tổng Quan</button>
-            <button onclick="switchTab('market')" id="btn-market" class="nav-btn px-3 py-2 text-[10px] font-black uppercase whitespace-nowrap">Thị Trường</button>
-            <button onclick="switchTab('journal')" id="btn-journal" class="nav-btn px-3 py-2 text-[10px] font-black uppercase whitespace-nowrap">Nhật Ký</button>
+        <nav class="flex gap-4 overflow-x-auto">
+            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active px-2 py-2 text-[11px]">📊 Bảng Điều Khiển</button>
+            <button onclick="switchTab('trading')" id="btn-trading" class="nav-btn px-2 py-2 text-[11px]">💼 Giao Dịch & Quản Trị</button>
+            <button onclick="switchTab('market')" id="btn-market" class="nav-btn px-2 py-2 text-[11px]">🌍 Nhịp Đập Thị Trường</button>
+            <button onclick="switchTab('psychology')" id="btn-psychology" class="nav-btn px-2 py-2 text-[11px]">🧠 Kỷ Luật</button>
         </nav>
     </header>
 
-    <main class="flex-1 overflow-y-auto p-6 space-y-8 relative z-10 custom-scrollbar pb-20">
-        <div id="tab-dashboard" class="tab-content space-y-6 animate-in fade-in">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 font-black uppercase">
-                <div class="glass-panel p-6 border-l-4 border-emerald-500 shadow-lg"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Vốn Đầu Tư</p><h2 class="text-2xl font-mono font-black mt-1 text-white" id="dash-balance">0đ</h2></div>
-                <div class="glass-panel p-6 border-l-4 border-rose-500 shadow-lg"><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mã đang giữ</p><h2 class="text-2xl font-mono font-black mt-1 text-rose-400" id="dash-holding">0</h2></div>
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 relative z-10">
+
+        <div id="tab-dashboard" class="tab-content space-y-6 block">
+            <div class="max-w-5xl mx-auto">
+                <p class="text-sm text-stone-600 mb-6 leading-relaxed bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
+                    <strong>Bảng điều khiển tổng hợp:</strong> Khu vực này cung cấp cái nhìn toàn cảnh về sức khỏe tài chính và hiệu suất giao dịch của bạn.
+                </p>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass-panel p-5 border-t-4 border-emerald-500">
+                        <p class="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Tổng Tài Sản</p>
+                        <h2 class="text-xl md:text-2xl font-mono font-black mt-1 text-stone-800" id="dash-balance">0đ</h2>
+                    </div>
+                    <div class="glass-panel p-5 border-t-4 border-blue-500">
+                        <p class="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Lợi Nhuận Ròng</p>
+                        <h2 class="text-xl md:text-2xl font-mono font-black mt-1 text-blue-600" id="dash-pnl">+0đ</h2>
+                    </div>
+                    <div class="glass-panel p-5 border-t-4 border-amber-500">
+                        <p class="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Tỷ Lệ Thắng</p>
+                        <h2 class="text-xl md:text-2xl font-mono font-black mt-1 text-amber-600" id="dash-winrate">0%</h2>
+                    </div>
+                    <div class="glass-panel p-5 border-t-4 border-rose-500">
+                        <p class="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Vị Thế Mở</p>
+                        <h2 class="text-xl md:text-2xl font-mono font-black mt-1 text-rose-600" id="dash-holding">0</h2>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-8 glass-panel p-6 flex flex-col">
+                        <h3 class="text-xs font-black uppercase text-stone-500 mb-4 tracking-widest">📈 Đường Cong Vốn</h3>
+                        <div class="chart-container">
+                            <canvas id="equity-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-4 glass-panel p-6 flex flex-col items-center justify-center">
+                        <h3 class="text-xs font-black uppercase text-stone-500 mb-4 self-start tracking-widest">⚖️ Phân Bổ Danh Mục</h3>
+                        <div class="chart-container w-full max-w-[250px] max-h-[250px]">
+                            <canvas id="allocation-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="tab-market" class="tab-content hidden space-y-8 animate-in fade-in">
-            <div class="glass-panel p-8 border-l-4 border-blue-500 shadow-2xl">
-                <h3 class="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">Ngày phân phối (VNI)</h3>
-                <input type="number" id="market-dist-days" value="0" class="text-7xl font-mono font-black bg-transparent border-none text-white w-28 focus:ring-0 outline-none">
-                <p class="text-[10px] text-slate-500 italic mt-2 uppercase">Dữ liệu được cập nhật tự động từ hệ thống.</p>
+        <div id="tab-trading" class="tab-content hidden space-y-6">
+            <div class="max-w-6xl mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    <div class="lg:col-span-4 space-y-6">
+                        <div class="glass-panel p-6 bg-stone-50">
+                            <h3 class="text-xs font-black text-stone-800 uppercase tracking-widest mb-6 border-b border-stone-200 pb-3">⚙️ Thiết Lập Vốn</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] text-stone-500 font-bold uppercase tracking-wider mb-1 block">Tổng Vốn (VNĐ)</label>
+                                    <input type="number" id="config-capital" value="2000000000" class="w-full p-3 text-lg font-mono font-black rounded-xl">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-stone-500 font-bold uppercase tracking-wider mb-1 block">Số Mã Dự Kiến</label>
+                                    <input type="number" id="config-stock-count" value="5" class="w-full p-3 text-lg font-mono font-black rounded-xl">
+                                </div>
+                                <button onclick="updateSystemCapital()" class="w-full py-3 bg-stone-800 text-white rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-stone-700">Cập Nhật</button>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 bg-emerald-50 border-emerald-100">
+                            <h3 class="text-xs font-black text-emerald-800 uppercase tracking-widest mb-6 border-b border-emerald-200 pb-3">🧮 Tính Vị Thế</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-[10px] text-emerald-600 font-bold uppercase mb-1 block">Rủi Ro (%)</label>
+                                    <select id="calc-risk-coeff" class="w-full p-3 rounded-xl font-black text-emerald-800">
+                                        <option value="1">1%</option>
+                                        <option value="2" selected>2%</option>
+                                        <option value="3">3%</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="text-[10px] text-stone-500 font-bold uppercase mb-1 block">Giá Mua</label>
+                                        <input type="number" id="calc-buy-price" class="w-full p-3 font-mono font-bold rounded-xl">
+                                    </div>
+                                    <div>
+                                        <label class="text-[10px] text-rose-500 font-bold uppercase mb-1 block">Dừng Lỗ</label>
+                                        <input type="number" id="calc-sl-price" class="w-full p-3 font-mono font-bold text-rose-600 rounded-xl">
+                                    </div>
+                                </div>
+                                <button onclick="calculatePosition()" class="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-emerald-500">Tính Toán</button>
+                                <div id="calc-result-panel" class="hidden mt-4 pt-4 border-t border-emerald-200 text-center">
+                                    <h2 id="calc-result-volume" class="text-3xl font-black text-emerald-700 font-mono">0 CP</h2>
+                                    <p id="calc-result-value" class="text-xs text-stone-500 mt-2 font-medium"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-8 space-y-6">
+                        <div class="glass-panel p-6">
+                            <h3 class="text-xs font-black text-stone-800 uppercase tracking-widest mb-6 border-b border-stone-200 pb-3">📝 Thêm Giao Dịch</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <input type="date" id="form-date" class="p-2.5 rounded-lg text-sm">
+                                <input type="text" id="form-ticker" placeholder="Mã..." class="p-2.5 rounded-lg text-sm font-bold uppercase">
+                                <select id="form-setup" class="p-2.5 rounded-lg text-sm">
+                                    <option value="Nền giá phẳng">Nền giá phẳng</option>
+                                    <option value="Cốc tay cầm">Cốc tay cầm</option>
+                                    <option value="VCP">VCP</option>
+                                    <option value="Pullback MA20">MA20</option>
+                                </select>
+                                <input type="number" id="form-qty" placeholder="SL..." class="p-2.5 rounded-lg text-sm">
+                                <input type="number" id="form-buy" placeholder="Giá mua..." class="p-2.5 rounded-lg text-sm">
+                                <input type="number" id="form-sell" placeholder="Giá bán..." class="p-2.5 rounded-lg text-sm">
+                                <button onclick="addTrade()" class="col-span-2 py-2.5 bg-blue-600 text-white rounded-lg font-bold uppercase text-xs">➕ Ghi Sổ</button>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel overflow-hidden border border-stone-200">
+                            <div class="bg-stone-100 p-4 border-b border-stone-200 flex justify-between items-center">
+                                <h3 class="text-xs font-black text-stone-800 uppercase">🗂️ Sổ Nhật Ký</h3>
+                                <span class="text-xs font-bold text-stone-500" id="total-trades-count">0 Lệnh</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs whitespace-nowrap">
+                                    <thead class="bg-stone-50 text-stone-500 uppercase tracking-wider font-black">
+                                        <tr>
+                                            <th class="p-4 border-b border-stone-200">Ngày</th>
+                                            <th class="p-4 border-b border-stone-200">Mã</th>
+                                            <th class="p-4 border-b border-stone-200">Mô Hình</th>
+                                            <th class="p-4 border-b border-stone-200 text-right">KL</th>
+                                            <th class="p-4 border-b border-stone-200 text-right">Vốn</th>
+                                            <th class="p-4 border-b border-stone-200 text-right">Chốt</th>
+                                            <th class="p-4 border-b border-stone-200 text-right">PnL</th>
+                                            <th class="p-4 border-b border-stone-200 text-center">Xóa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="journal-table-body" class="divide-y divide-stone-100 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="tab-journal" class="tab-content hidden space-y-4 animate-in fade-in px-2">
-            <div class="flex justify-between items-center">
-                <button onclick="alert('Vui lòng liên hệ Admin để nhập lệnh!')" class="px-8 py-4 bg-emerald-600 text-white rounded-[20px] font-black text-xs shadow-xl uppercase">NHẬT KÝ CHUNG</button>
-                <div class="text-right px-2 font-mono font-black text-emerald-400 text-2xl" id="journal-pnl-total">0đ</div>
+        <div id="tab-market" class="tab-content hidden space-y-6">
+            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-8">
+                    <div id="dist-card" class="glass-panel p-8 border-t-4 border-emerald-500">
+                        <h3 class="text-xs font-black text-stone-500 uppercase mb-6">📅 Ngày Phân Phối</h3>
+                        <div class="flex items-center gap-6">
+                            <input type="number" id="market-dist-days" value="0" class="text-6xl font-mono font-black bg-stone-100 text-stone-800 w-24 text-center rounded-2xl py-2" onchange="evaluateMarketRisk()">
+                            <div>
+                                <p id="dist-status" class="text-lg font-black text-emerald-600 uppercase">XU HƯỚNG TĂNG</p>
+                                <p id="dist-action" class="text-sm text-stone-500 mt-1">Duy trì quy mô bình thường.</p>
+                            </div>
+                        </div>
+                        <div id="dist-alert-box" class="mt-4 p-4 rounded-xl hidden">
+                            <p id="dist-alert-title"></p>
+                            <p id="dist-alert-desc" class="text-xs mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-8 flex flex-col items-center">
+                    <h3 class="text-xs font-black text-stone-500 uppercase self-start mb-2">🧭 Chỉ Báo Tâm Lý</h3>
+                    <div class="chart-container w-full max-w-[300px]">
+                        <canvas id="sentiment-gauge"></canvas>
+                    </div>
+                    <input type="range" id="sentiment-slider" min="0" max="100" value="50" class="w-full mt-4 accent-blue-500" oninput="updateSentiment()">
+                    <div class="flex justify-between w-full text-[10px] font-bold text-stone-400 mt-2">
+                        <span>SỢ HÃI</span>
+                        <span id="sentiment-val-display" class="text-stone-800 text-sm">50</span>
+                        <span>THAM LAM</span>
+                    </div>
+                </div>
             </div>
-            <div class="glass-panel overflow-hidden shadow-2xl"><div class="overflow-x-auto"><table class="w-full text-left text-xs uppercase"><thead class="bg-black/40 text-slate-500"><tr><th class="p-5">Ngày</th><th class="p-5">Mã CP</th><th class="p-5">Mẫu Hình</th><th class="p-5 text-right">Giá Vốn</th><th class="p-5 text-right">PnL</th></tr></thead><tbody id="journal-body" class="divide-y divide-white/5 text-slate-300"></tbody></table></div></div>
         </div>
+
+        <div id="tab-psychology" class="tab-content hidden space-y-6">
+            <div class="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel p-8 border-l-4 border-rose-500 bg-white">
+                    <h4 class="text-sm font-black text-stone-800 uppercase mb-4">🛑 1. Nỗi Sợ & Buông Bỏ</h4>
+                    <p class="text-sm text-stone-600 leading-relaxed">Chấp nhận rủi ro hoàn toàn trước khi vào lệnh. Hình dung trước viễn cảnh chạm điểm cắt lỗ.</p>
+                </div>
+                <div class="glass-panel p-8 border-l-4 border-blue-500 bg-white">
+                    <h4 class="text-sm font-black text-stone-800 uppercase mb-4">⚙️ 2. Quy Trình > Kết Quả</h4>
+                    <p class="text-sm text-stone-600 leading-relaxed">Tiền bạc là hệ quả của quy trình đúng. Tập trung vào việc làm đúng nguyên tắc hệ thống.</p>
+                </div>
+            </div>
+        </div>
+
     </main>
 
-    <div id="chat-container" class="fixed bottom-6 right-6 w-80 h-[400px] glass-panel flex flex-col shadow-2xl z-[100] hidden">
-        <div class="p-4 border-b border-white/10 flex justify-between items-center bg-black/40">
-            <h3 class="text-[10px] font-black text-emerald-400 uppercase">THẢO LUẬN NHÓM</h3>
-            <button onclick="toggleChat()"><i data-lucide="x" class="w-4 h-4"></i></button>
-        </div>
-        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-black/20"></div>
-        <div class="p-3 border-t border-white/10 bg-black/40 flex gap-2">
-            <input type="text" id="chat-input" placeholder="Nhập tên & tin nhắn..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none">
-            <button onclick="sendChatMessage()" class="p-2 bg-emerald-600 rounded-xl hover:bg-emerald-500 transition"><i data-lucide="send" class="w-4 h-4 text-white"></i></button>
-        </div>
-    </div>
-    <button onclick="toggleChat()" class="fixed bottom-6 right-6 p-4 bg-emerald-600 text-white rounded-full shadow-2xl z-[90]"><i data-lucide="messages-square"></i></button>
-
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="firebase.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

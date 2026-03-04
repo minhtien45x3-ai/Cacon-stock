@@ -1,13 +1,64 @@
-:root { --bg-dark: #020617; }
-body { background-color: var(--bg-dark); color: #f8fafc; font-family: 'Inter', sans-serif; }
-.global-bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%); }
-.blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; z-index: -1; }
-.blob-1 { width: 500px; height: 500px; background: #10b981; top: -100px; right: -100px; }
-.blob-2 { width: 400px; height: 400px; background: #3b82f6; bottom: -100px; left: -100px; }
-.glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.05); }
-.nav-btn { color: #94a3b8; transition: all 0.3s; }
-.nav-btn.active { color: white; border-bottom: 2px solid #10b981; }
-.admin-only { display: none !important; }
-body.is-admin .admin-only { display: block !important; }
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=JetBrains+Mono:wght@500;700;800&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #fafaf9;
+    color: #292524;
+    margin: 0;
+    padding: 0;
+}
+
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+.glass-panel {
+    background: #ffffff;
+    border: 1px solid #e7e5e4;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.nav-btn {
+    color: #78716c;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.nav-btn.active {
+    color: #059669;
+    border-bottom: 2px solid #059669;
+    font-weight: 700;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    height: 300px;
+}
+
+@media (min-width: 768px) {
+    .chart-container { height: 350px; }
+}
+
+input, select, textarea {
+    background-color: #f5f5f4 !important;
+    border: 1px solid #d6d3d1 !important;
+    color: #292524 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #059669 !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
