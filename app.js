@@ -1,1312 +1,1557 @@
-/* =========================================================
-   CACON STOCK PRO (linked tabs + demo data + full functions)
-   - Market → affects checklist + dashboard label
-   - Wiki → Analysis menu + Journal setup dropdown
-   - Radar → one-click create Trade + stats
-   - Journal → Dashboard charts + Capital auto fill
-   Data persisted in localStorage (v10 keys)
-========================================================= */
+/* =========================
+   TRADING JOURNAL PRO v3.1 (FULL TABS)
+   - Full tab như bản cũ
+   - Liên kết dữ liệu giữa tab:
+     Journal -> Dashboard/System/Month chart
+     Wiki -> Analysis/System/Journal setup
+     Market -> Analysis ready + Capital/System tips + Radar market-fit gợi ý
+     Radar -> click -> Analysis/Journal/Capital
+   - Fix lỗi:
+     + Chart center
+     + Upload Analysis click được
+     + Buttons edit/delete/reopen hoạt động
+========================= */
 
-const LS = {
-  STATE: 'cacon_state_v10',
-};
+const KEY = "TJ_PRO_V31_STATE";
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
-const fmtVND = (n) => (Number(n || 0)).toLocaleString('vi-VN') + 'Đ';
+const fmtVND = (n) => (Number(n || 0)).toLocaleString("vi-VN") + "đ";
+const fmtPct = (n) => (Number(n || 0)).toFixed(2) + "%";
 const safeNum = (v) => {
   const x = Number(v);
   return Number.isFinite(x) ? x : 0;
 };
 const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+const todayISO = () => new Date().toISOString().slice(0, 10);
 
 let state = loadState();
 
-/* ------------------------ BOOT ------------------------ */
-window.onload = function () {
-  lucide.createIcons();
+/* Charts */
+let equityChart, monthChart, sentimentChart, radarChart, sysTradesChart;
+
+/* Modal editing */
+let editingTradeId = null;
+let editingWikiId = null;
+let editingRadarId = null;
+
+/* =========================
+   BOOT
+========================= */
+window.addEventListener("DOMContentLoaded", () => {
   initCharts();
-  initSentimentGauge();
+  ensureDemoIfEmpty();
+  hydrateAll();
+  switchTab("dashboard");
+  rebuildAll();
+});
 
-  // enable save trade only when checklist all checked
-  document.addEventListener('change', (e) => {
-    if (e.target.classList.contains('trade-check')) {
-      const all = Array.from(document.querySelectorAll('.trade-check')).every((c) => c.checked);
-      const btn = document.getElementById('btn-save-trade');
-      btn.disabled = !all;
-      btn.classList.toggle('opacity-50', !all);
-    }
-  });
-
-  // first render
-  updateUI();
-
-  // keep market status text inside trade modal
-  updateMarketStatus(false);
-};
-
-/* --------------------- STATE I/O ---------------------- */
-function defaultState() {
+/* =========================
+   STATE
+========================= */
+function defaultState(){
   return {
-    version: 10,
-    totalCapital: 2000000000,
-
+    settings: {
+      marquee: "Kỷ luật > Cảm xúc • Cắt lỗ nhanh • Chỉ chọn kèo A+ • Market yếu thì giảm tỷ trọng • Không bình quân giá xuống • "
+    },
+    capital: {
+      base: 2000000000,
+      equityOverride: 2000000000,
+      riskPct: 1
+    },
     market: {
       distDays: 2,
       sentiment: 50,
-      sectors: 'BANK, CÔNG NGHỆ, CHỨNG KHOÁN',
-      updatedAt: Date.now(),
+      sectors: "BANK, CÔNG NGHỆ, CHỨNG KHOÁN"
     },
-
-    // trade schema:
-    // { id, date, ticker, setup, vol, buy, sell, sl, riskPct, img, notes, createdAt }
-    journal: [],
-
-    // wiki schema:
-    // { id, title, img, checklist:[...], createdAt }
-    wiki: [],
-
-    // radar schema:
-    // { id, ticker, setup, price, pivot, score, createdAt }
-    radar: [],
-
-    // library schema:
-    // { id, title, desc, content, createdAt }
-    library: [
-      {
-        id: uid(),
-        title: 'HỆ THỐNG CANSLIM',
-        desc: 'Chọn siêu cổ phiếu tăng trưởng bền vững.',
-        content: 'C-A-N-S-L-I-M: bộ tiêu chí của William O’Neil, kết hợp tăng trưởng + dòng tiền + thị trường chung.',
-        createdAt: Date.now(),
-      },
-      {
-        id: uid(),
-        title: 'MINERVINI – SEPA',
-        desc: 'Kỷ luật – điểm mua chuẩn – quản trị rủi ro.',
-        content: 'Tập trung nền giá chặt, sức mạnh giá, volume, market timing, vào lệnh tại pivot và thoát theo nguyên tắc.',
-        createdAt: Date.now(),
-      }
-    ],
-
     analysis: {
       selectedWikiId: null,
-      tempImg: null,
-      checklistTicks: {}, // { wikiId: boolean[] }
+      realImg: null
     },
-
-    psychology: {
-      habits: { plan: false, stop: false, journal: false, sleep: false },
-      note: '',
-      updatedAt: Date.now(),
-    },
-
-    charts: {}, // runtime only
-    ui: {
-      radarSort: 'score',
-    },
+    wiki: [],
+    journal: [],
+    radar: [] // watchlist scoring
   };
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(LS.STATE);
-    if (!raw) {
-      const s = defaultState();
-      // seed demo on first run so every tab has numbers
-      seedDemoInto(s);
-      localStorage.setItem(LS.STATE, JSON.stringify(s));
-      return s;
+function loadState(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return defaultState();
+    const s = JSON.parse(raw);
+    const d = defaultState();
+    return {
+      ...d,
+      ...s,
+      settings: {...d.settings, ...(s.settings||{})},
+      capital: {...d.capital, ...(s.capital||{})},
+      market: {...d.market, ...(s.market||{})},
+      analysis: {...d.analysis, ...(s.analysis||{})},
+      wiki: Array.isArray(s.wiki) ? s.wiki : [],
+      journal: Array.isArray(s.journal) ? s.journal : [],
+      radar: Array.isArray(s.radar) ? s.radar : []
+    };
+  }catch(e){
+    return defaultState();
+  }
+}
+
+function saveState(){
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+/* =========================
+   DEMO
+========================= */
+function ensureDemoIfEmpty(){
+  if(state.wiki.length === 0 || state.journal.length === 0 || state.radar.length === 0){
+    seedDemo(false);
+  }
+  applySettingsUI();
+}
+
+function seedDemo(force=true){
+  if(force){
+    state = defaultState();
+  }
+
+  state.wiki = [
+    {
+      id: uid(),
+      title: "CỐC TAY CẦM",
+      img: "",
+      checklist: [
+        "ĐÁY TRÒN (6–15 TUẦN)",
+        "TAY CẦM (1–5 TUẦN)",
+        "VOL KHÔ CẠN TRƯỚC PIVOT",
+        "BREAK PIVOT + VOL",
+        "MARKET THUẬN + RS TĂNG"
+      ],
+      createdAt: Date.now()
+    },
+    {
+      id: uid(),
+      title: "VCP",
+      img: "",
+      checklist: [
+        "CO HẸP (3–5 ĐỢT)",
+        "VOL GIẢM DẦN",
+        "BIÊN ĐỘ CHẶT",
+        "BREAKOUT CÓ VOL",
+        "CẮT LỖ NHANH"
+      ],
+      createdAt: Date.now()
+    },
+    {
+      id: uid(),
+      title: "NỀN PHẲNG",
+      img: "",
+      checklist: [
+        "TỐI THIỂU 5 TUẦN",
+        "BIÊN ĐỘ <= 15%",
+        "VOL GIẢM",
+        "PIVOT RÕ",
+        "MARKET OK"
+      ],
+      createdAt: Date.now()
     }
-    const parsed = JSON.parse(raw);
-    // migrate lightly
-    const merged = { ...defaultState(), ...parsed };
-    merged.market = { ...defaultState().market, ...(parsed.market || {}) };
-    merged.analysis = { ...defaultState().analysis, ...(parsed.analysis || {}) };
-    merged.psychology = { ...defaultState().psychology, ...(parsed.psychology || {}) };
-    merged.ui = { ...defaultState().ui, ...(parsed.ui || {}) };
-    merged.library = Array.isArray(parsed.library) ? parsed.library : defaultState().library;
-    merged.wiki = Array.isArray(parsed.wiki) ? parsed.wiki : [];
-    merged.journal = Array.isArray(parsed.journal) ? parsed.journal : [];
-    merged.radar = Array.isArray(parsed.radar) ? parsed.radar : [];
-    // ensure demo minimal
-    if (merged.wiki.length === 0 || merged.journal.length === 0) seedDemoInto(merged);
-    return merged;
-  } catch (e) {
-    const s = defaultState();
-    seedDemoInto(s);
-    localStorage.setItem(LS.STATE, JSON.stringify(s));
-    return s;
-  }
-}
+  ];
 
-function saveState() {
-  const copy = structuredClone(state);
-  // remove runtime-only charts from persisted state
-  copy.charts = {};
-  localStorage.setItem(LS.STATE, JSON.stringify(copy));
-}
+  const setup1 = state.wiki[0].title;
+  const setup2 = state.wiki[1].title;
+  const setup3 = state.wiki[2].title;
 
-/* ------------------------ DEMO ------------------------ */
-function seedDemo(force = false) {
-  if (!force && (state.journal.length > 0 || state.wiki.length > 0)) {
-    toast('Đã có dữ liệu. Bấm DEMO lần nữa để ghi đè.');
-    return;
-  }
-  seedDemoInto(state, true);
+  state.journal = [
+    { id: uid(), date: "2026-01-10", ticker: "FPT", setup: setup1, vol: 1000, buy: 118000, sell: 132000, stop: 110000, notes: "break pivot vol tăng", img: null },
+    { id: uid(), date: "2026-01-28", ticker: "MWG", setup: setup3, vol: 800,  buy: 46500,  sell: 43800,  stop: 43000,  notes: "market yếu → cắt lỗ đúng", img: null },
+    { id: uid(), date: "2026-02-12", ticker: "VCB", setup: setup2, vol: 600,  buy: 92500,  sell: 101000, stop: 88000,  notes: "nền chặt, vol khô", img: null },
+    { id: uid(), date: "2026-02-25", ticker: "HPG", setup: setup3, vol: 1500, buy: 28300,  sell: 0,      stop: 26800,  notes: "đang nắm giữ", img: null }
+  ];
+
+  // Radar demo
+  state.radar = [
+    { id: uid(), ticker:"FPT", setup: setup1, rs:82, vol:78, base:80, trend:75, marketfit:70, notes:"leader", createdAt:Date.now() },
+    { id: uid(), ticker:"VCB", setup: setup2, rs:76, vol:66, base:72, trend:70, marketfit:65, notes:"bank mạnh", createdAt:Date.now() },
+    { id: uid(), ticker:"HPG", setup: setup3, rs:60, vol:58, base:62, trend:55, marketfit:60, notes:"watch", createdAt:Date.now() }
+  ];
+
   saveState();
-  updateUI();
-  toast('Đã nạp DEMO để mỗi tab có số liệu minh hoạ.');
+  hydrateAll();
+  rebuildAll();
+
+  if(force) alert("Đã nạp DEMO.");
 }
 
-function seedDemoInto(s, overwrite = false) {
-  if (overwrite) {
-    s.journal = [];
-    s.wiki = [];
-    s.radar = [];
-  }
-  if (s.wiki.length === 0) {
-    s.wiki = [
-      {
-        id: uid(),
-        title: 'CỐC TAY CẦM',
-        img: 'https://i.imgur.com/K7MvL1s.png',
-        checklist: ['ĐÁY TRÒN (6–15 TUẦN)', 'TAY CẦM THẮT CHẶT (1–5 TUẦN)', 'BREAK PIVOT + VOL > AVG', 'MARKET THUẬN', 'SL 7–8%'],
-        createdAt: Date.now(),
-      },
-      {
-        id: uid(),
-        title: 'VCP',
-        img: 'https://i.imgur.com/Qq9G1bD.png',
-        checklist: ['CO HẸP BIÊN ĐỘ (3–5 ĐỢT)', 'VOLUME KHÔ CẠN', 'NỀN CHẶT', 'BREAKOUT VOL', 'RELATIVE STRENGTH'],
-        createdAt: Date.now(),
-      },
-      {
-        id: uid(),
-        title: 'NỀN PHẲNG (FLAT BASE)',
-        img: 'https://i.imgur.com/7o2RjZf.png',
-        checklist: ['BIÊN ĐỘ <= 15%', 'TỐI THIỂU 5 TUẦN', 'VOL GIẢM DẦN', 'PIVOT RÕ', 'MARKET OK'],
-        createdAt: Date.now(),
-      },
-    ];
-  }
+/* =========================
+   NAV / TABS
+========================= */
+function switchTab(tab){
+  document.querySelectorAll(".tab").forEach(el => el.classList.add("hidden"));
+  const active = document.getElementById("tab-" + tab);
+  if(active) active.classList.remove("hidden");
 
-  if (s.journal.length === 0) {
-    const w1 = s.wiki[0]?.title || 'CỐC TAY CẦM';
-    const w2 = s.wiki[1]?.title || 'VCP';
-    const w3 = s.wiki[2]?.title || 'NỀN PHẲNG';
+  document.querySelectorAll(".tabbtn").forEach(b => b.classList.remove("active"));
+  const btn = document.getElementById("btn-" + tab);
+  if(btn) btn.classList.add("active");
 
-    s.journal = [
-      { id: uid(), date: '2026-01-10', ticker: 'FPT', setup: w1, vol: 1000, buy: 118000, sell: 132000, sl: 110000, riskPct: 2, img: null, notes: 'break pivot vol tăng', createdAt: Date.now() - 1000000 },
-      { id: uid(), date: '2026-01-28', ticker: 'MWG', setup: w3, vol: 800, buy: 46500, sell: 43800, sl: 43000, riskPct: 2, img: null, notes: 'market yếu → cắt lỗ đúng', createdAt: Date.now() - 900000 },
-      { id: uid(), date: '2026-02-12', ticker: 'VCB', setup: w2, vol: 600, buy: 92500, sell: 101000, sl: 88000, riskPct: 1.5, img: null, notes: 'nền chặt, vol khô', createdAt: Date.now() - 800000 },
-      { id: uid(), date: '2026-02-25', ticker: 'HPG', setup: w3, vol: 1500, buy: 28300, sell: 0, sl: 26800, riskPct: 2, img: null, notes: 'đang nắm giữ', createdAt: Date.now() - 700000 },
-      { id: uid(), date: '2026-03-01', ticker: 'SSI', setup: w2, vol: 1200, buy: 36500, sell: 0, sl: 34500, riskPct: 2, img: null, notes: 'đang nắm giữ', createdAt: Date.now() - 600000 },
-    ];
-  }
-
-  if (s.radar.length === 0) {
-    const w1 = s.wiki[0]?.title || 'CỐC TAY CẦM';
-    const w2 = s.wiki[1]?.title || 'VCP';
-    s.radar = [
-      { id: uid(), ticker: 'FPT', setup: w1, price: 134000, pivot: 136000, score: 82, createdAt: Date.now() },
-      { id: uid(), ticker: 'VCB', setup: w2, price: 100500, pivot: 101200, score: 79, createdAt: Date.now() },
-      { id: uid(), ticker: 'CTG', setup: w2, price: 41200, pivot: 42000, score: 74, createdAt: Date.now() },
-    ];
-  }
+  if(tab === "dashboard") rebuildAll();
+  if(tab === "market") hydrateMarket();
+  if(tab === "radar") renderRadar();
+  if(tab === "system") renderSystem();
+  if(tab === "analysis") renderAnalysis();
+  if(tab === "capital") { hydrateCapital(); calcPosition(); }
+  if(tab === "journal") renderJournal();
+  if(tab === "wiki") renderWiki();
+  if(tab === "settings") hydrateSettings();
 }
 
-/* ------------------------- UI ------------------------- */
-function updateUI() {
-  // sync inputs with state
-  hydrateMarketInputs();
-  hydratePsyInputs();
+/* =========================
+   CHARTS INIT
+========================= */
+function initCharts(){
+  equityChart = new Chart(document.getElementById("equityChart"), {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "Equity", data: [], borderColor: "#10b981", fill: true, backgroundColor: "rgba(16,185,129,.08)", pointRadius: 0 }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { color: "rgba(148,163,184,.9)", font: { size: 11, weight: "800" } } },
+        y: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { color: "rgba(148,163,184,.9)", font: { size: 11, weight: "800" } } }
+      }
+    }
+  });
 
-  populateSelects();
-  renderWikiGrid();
-  renderAnalysisMenu();
-  renderLibrary();
-  renderRadar();
+  monthChart = new Chart(document.getElementById("monthChart"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "PNL tháng", data: [], backgroundColor: "rgba(59,130,246,.6)" }] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { color: "rgba(148,163,184,.9)", font: { size: 11, weight: "800" } } },
+        y: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { color: "rgba(148,163,184,.9)", font: { size: 11, weight: "800" } } }
+      }
+    }
+  });
+
+  sentimentChart = new Chart(document.getElementById("sentimentChart"), {
+    type: "doughnut",
+    data: { labels: ["Sentiment", "Rest"], datasets: [{ data: [50, 50], backgroundColor: ["rgba(16,185,129,.9)", "rgba(255,255,255,.07)"], borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: "78%", plugins: { legend: { display: false }, tooltip: { enabled: false } } }
+  });
+
+  radarChart = new Chart(document.getElementById("radarChart"), {
+    type: "radar",
+    data: {
+      labels: ["RS","VOL","BASE","TREND","MKT-FIT"],
+      datasets: [{ label: "Score", data: [0,0,0,0,0], borderColor:"#10b981", backgroundColor:"rgba(16,185,129,.10)" }]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        r:{
+          suggestedMin:0,
+          suggestedMax:100,
+          grid:{ color:"rgba(255,255,255,.08)" },
+          angleLines:{ color:"rgba(255,255,255,.08)" },
+          pointLabels:{ color:"rgba(226,232,240,.92)", font:{ size:11, weight:"800" } },
+          ticks:{ display:false }
+        }
+      }
+    }
+  });
+
+  sysTradesChart = new Chart(document.getElementById("sysTradesChart"), {
+    type:"bar",
+    data:{ labels:[], datasets:[
+      { label:"Tổng lệnh", data:[], backgroundColor:"rgba(245,158,11,.55)" }
+    ]},
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ grid:{ color:"rgba(255,255,255,.06)" }, ticks:{ color:"rgba(148,163,184,.9)", font:{ size:11, weight:"800" } } },
+        y:{ grid:{ color:"rgba(255,255,255,.06)" }, ticks:{ color:"rgba(148,163,184,.9)", font:{ size:11, weight:"800" } } }
+      }
+    }
+  });
+}
+
+/* =========================
+   HYDRATE
+========================= */
+function hydrateAll(){
+  applySettingsUI();
+  hydrateMarket();
+  hydrateCapital();
+  fillSetupSelect();
+  renderWiki();
   renderJournal();
-
-  calculateStats(); // also refresh dashboard
-  updateMarketStatus(false);
-  updateSentiment(state.market.sentiment, false);
-  updatePsychologyUI();
-
-  calcRisk(); // keep numbers in capital
+  renderAnalysisMenu();
+  renderAnalysis();
+  renderRadar();
+  renderSystem();
+  hydrateSettings();
 }
 
-function toast(msg) {
-  // minimal toast: use console + alert fallback
-  console.log('[CACON]', msg);
+function fillSetupSelect(){
+  const selTrade = document.getElementById("t-setup");
+  const selRadar = document.getElementById("rm-setup");
+  const sysPick = document.getElementById("sysPickSetup");
+
+  const opts = state.wiki.map(w => `<option value="${escapeHtml(w.title)}">${escapeHtml(w.title)}</option>`).join("") || `<option value="—">—</option>`;
+
+  if(selTrade){ selTrade.innerHTML = opts; }
+  if(selRadar){ selRadar.innerHTML = opts; }
+  if(sysPick){ sysPick.innerHTML = opts; }
 }
 
-/* --------------------- TAB & MODAL --------------------- */
-function switchTab(id) {
-  document.querySelectorAll('.tab-content').forEach((el) => el.classList.add('hidden'));
-  const tab = document.getElementById('tab-' + id);
-  if (tab) tab.classList.remove('hidden');
-
-  document.querySelectorAll('.nav-btn').forEach((b) => b.classList.remove('active'));
-  const btn = document.getElementById('btn-' + id);
-  if (btn) btn.classList.add('active');
-
-  if (id === 'dashboard') calculateStats();
-  if (id === 'radar') renderRadar();
-  if (id === 'analysis') renderAnalysis();
-  if (id === 'psychology') updatePsychologyUI();
+/* =========================
+   DASHBOARD
+========================= */
+function rebuildAll(){
+  calculateDashboard();
+  buildEquityChart();
+  buildMonthChart();
+  renderSystem(); // hệ thống luôn cập nhật
+  renderRadar();  // radar cũng cập nhật
+  renderCapitalTips();
 }
 
-function openModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.remove('hidden');
-}
-function closeModal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('hidden');
-}
-function zoomImage(src) {
-  const img = document.getElementById('zoom-img');
-  img.src = src;
-  openModal('modal-zoom');
-}
+function calculateDashboard(){
+  const base = safeNum(state.capital.base);
+  const trades = state.journal || [];
 
-/* ------------------------ CHARTS ------------------------ */
-function initCharts() {
-  state.charts.equity = new Chart(document.getElementById('equityChart').getContext('2d'), {
-    type: 'line',
-    data: { labels: [], datasets: [{ data: [], borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16,185,129,0.05)', pointRadius: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 10, weight: 800 } }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: 'rgba(148,163,184,0.8)', font: { size: 10, weight: 800 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } },
+  const closed = trades.filter(t => safeNum(t.sell) > 0 && safeNum(t.buy) > 0);
+  const open = trades.filter(t => !(safeNum(t.sell) > 0) && safeNum(t.buy) > 0);
+
+  let pnl = 0;
+  let wins = 0, losses = 0;
+  let sumWin = 0, sumLoss = 0;
+  let sumPct = 0;
+
+  const sortedClosed = [...closed].sort((a,b)=> String(a.date).localeCompare(String(b.date)));
+
+  let equity = base;
+  let peak = base;
+  let maxDD = 0;
+
+  sortedClosed.forEach(t=>{
+    const buy = safeNum(t.buy), sell = safeNum(t.sell), vol = safeNum(t.vol);
+    const tradePnl = (sell - buy) * vol;
+    pnl += tradePnl;
+
+    const pct = buy > 0 ? ((sell - buy) / buy) * 100 : 0;
+    sumPct += pct;
+
+    if(tradePnl >= 0){ wins++; sumWin += tradePnl; }
+    else { losses++; sumLoss += Math.abs(tradePnl); }
+
+    equity += tradePnl;
+    peak = Math.max(peak, equity);
+    const dd = peak > 0 ? ((peak - equity)/peak)*100 : 0;
+    maxDD = Math.max(maxDD, dd);
   });
 
-  state.charts.allocation = new Chart(document.getElementById('allocationChart').getContext('2d'), {
-    type: 'doughnut',
-    data: { labels: ['TIỀN MẶT', 'CỔ PHIẾU'], datasets: [{ data: [100, 0], backgroundColor: ['#1e293b', '#10b981'], borderWidth: 0 }] },
-    options: { responsive: true, cutout: '80%', plugins: { legend: { position: 'bottom', labels: { color: 'rgba(148,163,184,0.8)', font: { size: 10, weight: 900 } } } } },
-  });
+  const totalClosed = closed.length;
+  const winrate = totalClosed ? (wins/totalClosed)*100 : 0;
+  const avgPct = totalClosed ? (sumPct/totalClosed) : 0;
+  const avgWin = wins ? (sumWin/wins) : 0;
+  const avgLoss = losses ? (sumLoss/losses) : 0;
+  const lossRate = 100 - winrate;
+  const expectancy = ((winrate/100)*avgWin) - ((lossRate/100)*avgLoss);
+  const pf = sumLoss > 0 ? (sumWin / sumLoss) : (sumWin > 0 ? 99 : 0);
+  const ept = totalClosed ? (pnl/totalClosed) : 0;
+
+  setText("dash-equity", fmtVND(base + pnl));
+  setText("dash-equity-sub", "Vốn gốc: " + fmtVND(base));
+  setText("dash-pnl", fmtVND(pnl));
+  setText("dash-pnl-sub", "Lệnh đóng: " + totalClosed);
+  setText("dash-winrate", fmtPct(winrate));
+  setText("dash-winrate-sub", "Avg %: " + fmtPct(avgPct));
+  setText("dash-mdd", fmtPct(maxDD));
+  setText("dash-mdd-sub", "Profit Factor: " + (Number.isFinite(pf) ? pf.toFixed(2) : "0.00"));
+
+  setText("pro-expect", fmtVND(expectancy));
+  setText("pro-pf", (Number.isFinite(pf) ? pf.toFixed(2) : "0.00"));
+  setText("pro-avgwin", fmtVND(avgWin));
+  setText("pro-avgloss", fmtVND(avgLoss));
+  setText("pro-avgpct", fmtPct(avgPct));
+  setText("pro-ept", fmtVND(ept));
+
+  setText("j-total", trades.length);
+  setText("j-closed", totalClosed);
+  setText("j-open", open.length);
+  setText("j-avgpct", fmtPct(avgPct));
 }
 
-function initSentimentGauge() {
-  state.charts.sentiment = new Chart(document.getElementById('sentimentGauge').getContext('2d'), {
-    type: 'doughnut',
-    data: { datasets: [{ data: [50, 50], backgroundColor: ['#10b981', 'rgba(255,255,255,0.05)'], circumference: 180, rotation: 270, borderWidth: 0 }] },
-    options: { responsive: true, cutout: '85%', plugins: { tooltip: { enabled: false }, legend: { display: false } } },
-  });
-}
+function buildEquityChart(){
+  const base = safeNum(state.capital.base);
+  const closed = (state.journal||[])
+    .filter(t => safeNum(t.sell) > 0 && safeNum(t.buy) > 0)
+    .sort((a,b)=> String(a.date).localeCompare(String(b.date)));
 
-function rebuildCharts() {
-  calculateStats();
-  toast('Đã refresh chart.');
-}
-
-/* -------------------- DASHBOARD STATS ------------------- */
-function calculateStats() {
-  const closed = state.journal.filter((t) => safeNum(t.sell) > 0);
-  const open = state.journal.filter((t) => safeNum(t.sell) === 0);
-
-  const totalPnL = closed.reduce((acc, t) => acc + (safeNum(t.sell) - safeNum(t.buy)) * safeNum(t.vol), 0);
-  const win = closed.filter((t) => safeNum(t.sell) > safeNum(t.buy)).length;
-  const winRate = closed.length ? Math.round((win / closed.length) * 100) : 0;
-
-  // Approx R-multiple if SL exists:
-  const avgR = closed.length
-    ? closed.reduce((acc, t) => {
-        const risk = Math.max(1, (safeNum(t.buy) - safeNum(t.sl)));
-        const r = (safeNum(t.sell) - safeNum(t.buy)) / risk;
-        return acc + (Number.isFinite(r) ? r : 0);
-      }, 0) / closed.length
-    : 0;
-
-  // allocation (stock value = cost basis for open)
-  const stockValue = open.reduce((acc, t) => acc + safeNum(t.buy) * safeNum(t.vol), 0);
-  const cash = Math.max(0, safeNum(state.totalCapital) - stockValue + totalPnL); // simplified cash model
-  const total = Math.max(1, cash + stockValue);
-
-  // dashboard cards
-  setText('dash-balance', fmtVND(safeNum(state.totalCapital) + totalPnL));
-  setText('dash-pnl', (totalPnL >= 0 ? '+' : '') + fmtVND(totalPnL).replace('Đ', '') + 'Đ');
-  document.getElementById('dash-pnl').style.color = totalPnL >= 0 ? '#10b981' : '#f43f5e';
-  setText('dash-winrate', winRate + '%');
-  setText('dash-holding', open.length);
-
-  setText('dash-sub-capital', 'VỐN GỐC: ' + fmtVND(state.totalCapital));
-  setText('dash-sub-closed', 'LỆNH ĐÓNG: ' + closed.length);
-  setText('dash-sub-avg', 'AVG R: ' + avgR.toFixed(2) + 'R');
-  setText('dash-sub-market', 'MARKET: ' + marketLabel());
-
-  setText('dash-cash', fmtVND(cash));
-  setText('dash-stock', fmtVND(stockValue));
-
-  // monthly & setup rank tables
-  renderMonthlyStats(closed);
-  renderSetupRanking(closed);
-
-  // charts
-  renderEquityCurve(closed);
-  renderAllocationChart(cash, stockValue);
-}
-
-function renderMonthlyStats(closed) {
-  const stats = {};
-  closed.forEach((t) => {
-    const month = (t.date || '').slice(0, 7) || '—';
-    if (!stats[month]) stats[month] = { count: 0, pnl: 0 };
-    stats[month].count += 1;
-    stats[month].pnl += (safeNum(t.sell) - safeNum(t.buy)) * safeNum(t.vol);
-  });
-
-  const rows = Object.entries(stats)
-    .sort((a, b) => (a[0] > b[0] ? 1 : -1))
-    .map(([m, v]) => {
-      const pnlClass = v.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
-      return `
-        <tr class="border-b border-white/5 uppercase font-bold">
-          <td class="p-4 font-mono">${m}</td>
-          <td class="p-4 text-center">${v.count} LỆNH</td>
-          <td class="p-4 text-right font-black ${pnlClass}">${fmtVND(v.pnl)}</td>
-        </tr>`;
-    })
-    .join('');
-
-  document.getElementById('stats-monthly-body').innerHTML = rows || `<tr><td class="p-4 text-slate-500">CHƯA CÓ DỮ LIỆU</td></tr>`;
-}
-
-function renderSetupRanking(closed) {
-  const sMap = {};
-  closed.forEach((t) => {
-    const k = t.setup || '—';
-    if (!sMap[k]) sMap[k] = { w: 0, t: 0 };
-    sMap[k].t++;
-    if (safeNum(t.sell) > safeNum(t.buy)) sMap[k].w++;
-  });
-
-  const ranked = Object.entries(sMap)
-    .map(([name, v]) => ({ name, wr: v.t ? Math.round((v.w / v.t) * 100) : 0 }))
-    .sort((a, b) => b.wr - a.wr);
-
-  document.getElementById('stats-setup-body').innerHTML =
-    ranked
-      .map(
-        (s) => `
-        <div class="space-y-1">
-          <div class="flex justify-between text-[10px] font-black uppercase">
-            <span>${escapeHtml(s.name)}</span>
-            <span class="text-emerald-400">${s.wr}%</span>
-          </div>
-          <div class="h-1 bg-white/5 rounded-full overflow-hidden">
-            <div class="h-full bg-emerald-500" style="width:${s.wr}%"></div>
-          </div>
-        </div>`
-      )
-      .join('') || `<p class="text-slate-500 text-xs">CHƯA CÓ DỮ LIỆU</p>`;
-}
-
-function renderEquityCurve(closed) {
-  // equity curve over time from closed trades sorted by date
-  const sorted = [...closed].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-  let cum = 0;
   const labels = [];
   const data = [];
 
-  sorted.forEach((t) => {
-    cum += (safeNum(t.sell) - safeNum(t.buy)) * safeNum(t.vol);
-    labels.push((t.date || '').slice(5)); // MM-DD
-    data.push(safeNum(state.totalCapital) + cum);
+  let equity = base;
+  labels.push("BASE");
+  data.push(equity);
+
+  closed.forEach(t=>{
+    const buy = safeNum(t.buy), sell = safeNum(t.sell), vol = safeNum(t.vol);
+    equity += (sell - buy) * vol;
+    labels.push(String(t.date).slice(5));
+    data.push(Math.round(equity));
   });
 
-  // if no closed trades → show 1 point
-  if (labels.length === 0) {
-    labels.push('—');
-    data.push(safeNum(state.totalCapital));
+  equityChart.data.labels = labels;
+  equityChart.data.datasets[0].data = data;
+  equityChart.update();
+}
+
+function buildMonthChart(){
+  const closed = (state.journal||[])
+    .filter(t => safeNum(t.sell) > 0 && safeNum(t.buy) > 0);
+
+  const map = new Map();
+  closed.forEach(t=>{
+    const ym = String(t.date||"").slice(0,7) || "NA";
+    const pnl = (safeNum(t.sell)-safeNum(t.buy))*safeNum(t.vol);
+    map.set(ym, (map.get(ym)||0) + pnl);
+  });
+
+  const labels = [...map.keys()].sort();
+  const data = labels.map(k => Math.round(map.get(k)));
+
+  monthChart.data.labels = labels.length ? labels : ["—"];
+  monthChart.data.datasets[0].data = labels.length ? data : [0];
+  monthChart.update();
+}
+
+/* =========================
+   MARKET
+========================= */
+function hydrateMarket(){
+  const dist = document.getElementById("m-dist");
+  const sec = document.getElementById("m-sectors");
+  if(dist) dist.value = state.market.distDays;
+  if(sec) sec.value = state.market.sectors || "";
+  updateMarket(false);
+  setSentiment(state.market.sentiment, false);
+}
+
+function updateMarket(save){
+  const dist = safeNum(document.getElementById("m-dist")?.value);
+  const title = document.getElementById("m-title");
+  const desc = document.getElementById("m-desc");
+
+  let t="THỊ TRƯỜNG BÌNH THƯỜNG";
+  let d="Có thể giao dịch nhưng vẫn ưu tiên kỷ luật.";
+
+  if(dist <= 2){
+    t="THỊ TRƯỜNG BÌNH THƯỜNG";
+    d="Giữ tỷ trọng hợp lý. Ưu tiên leader & setup đẹp.";
+  }else if(dist === 3){
+    t="THỊ TRƯỜNG CÓ RỦI RO";
+    d="Hạ margin. Chỉ chọn kèo A+ và giảm số lệnh.";
+  }else if(dist === 4){
+    t="NGUY CƠ CAO";
+    d="Hạ tỷ trọng mạnh (gợi ý ~50% tiền mặt).";
+  }else{
+    t="BẢO TOÀN VỐN";
+    d="Đưa về tiền mặt. Chờ market xác nhận uptrend.";
   }
 
-  state.charts.equity.data.labels = labels;
-  state.charts.equity.data.datasets[0].data = data;
-  state.charts.equity.update();
-}
+  if(title) title.textContent = t;
+  if(desc) desc.textContent = d;
 
-function renderAllocationChart(cash, stockValue) {
-  const total = Math.max(1, cash + stockValue);
-  const cashPct = Math.round((cash / total) * 100);
-  const stockPct = 100 - cashPct;
-
-  state.charts.allocation.data.datasets[0].data = [cashPct, stockPct];
-  state.charts.allocation.update();
-}
-
-/* ------------------------- MARKET ------------------------- */
-function hydrateMarketInputs() {
-  const d = document.getElementById('market-dist-days');
-  const s = document.getElementById('market-sectors');
-
-  if (d) d.value = state.market.distDays ?? 0;
-  if (s) s.value = state.market.sectors ?? '';
-}
-
-function saveMarketSectors() {
-  state.market.sectors = (document.getElementById('market-sectors')?.value || '').toUpperCase();
-  state.market.updatedAt = Date.now();
-  saveState();
-}
-
-function suggestLeaders() {
-  const preset = 'BANK, CHỨNG KHOÁN, CÔNG NGHỆ, BĐS KCN';
-  const el = document.getElementById('market-sectors');
-  if (el) el.value = preset;
-  saveMarketSectors();
-  toast('Đã gợi ý ngành dẫn dắt.');
-}
-
-function updateMarketStatus(persist = true) {
-  const dist = safeNum(document.getElementById('market-dist-days')?.value ?? state.market.distDays);
   state.market.distDays = dist;
-
-  const box = document.getElementById('dist-alert-box');
-  const title = document.getElementById('dist-alert-title');
-  const desc = document.getElementById('dist-alert-desc');
-
-  // mapping per your rules
-  let t = 'BÌNH THƯỜNG';
-  let d = '1–2 ngày phân phối: vẫn có thể giải ngân chọn lọc.';
-  let cls = 'bg-emerald-500/10 border border-emerald-500/20';
-
-  if (dist <= 2) {
-    t = 'BÌNH THƯỜNG';
-    d = '1–2 ngày phân phối: ưu tiên cổ phiếu leader, tránh mua đuổi.';
-    cls = 'bg-emerald-500/10 border border-emerald-500/20';
-  } else if (dist === 3) {
-    t = 'RỦI RO: HẠ MARGIN';
-    d = '3 ngày phân phối: siết tiêu chuẩn vào lệnh, giảm margin.';
-    cls = 'bg-amber-500/10 border border-amber-500/20';
-  } else if (dist === 4) {
-    t = 'NGUY CƠ CAO: 50% TIỀN MẶT';
-    d = '4 ngày phân phối: ưu tiên phòng thủ, hạ tỷ trọng.';
-    cls = 'bg-rose-500/10 border border-rose-500/20';
-  } else if (dist >= 5) {
-    t = 'CẢNH BÁO: 100% TIỀN MẶT';
-    d = '5–6+ ngày phân phối: phòng thủ mạnh, hạn chế mở vị thế mới.';
-    cls = 'bg-rose-500/15 border border-rose-500/25';
-  }
-
-  if (box) box.className = `mt-4 p-6 rounded-3xl ${cls}`;
-  if (title) title.innerText = t;
-  if (desc) desc.innerText = d;
-
-  // update analysis + trade modal helper labels
-  setText('ana-market', marketLabel());
-  setText('dash-sub-market', 'MARKET: ' + marketLabel());
-  setText('trade-market-status', marketLabel());
-
-  if (persist) {
-    state.market.updatedAt = Date.now();
-    saveState();
-    calculateStats();
-  }
+  if(save){ saveState(); rebuildAll(); }
 }
 
-function marketLabel() {
-  const dist = safeNum(state.market.distDays);
-  if (dist <= 2) return 'BÌNH THƯỜNG';
-  if (dist === 3) return 'RỦI RO (HẠ MARGIN)';
-  if (dist === 4) return 'NGUY CƠ CAO (50% CASH)';
-  return 'PHÒNG THỦ (100% CASH)';
-}
-
-function pushMarketToJournal() {
-  openModal('modal-trade');
-  primeTradeModal();
-  toast('Đã áp dụng Market Filter vào modal lệnh.');
-}
-
-function updateSentiment(val, persist = true) {
-  const v = Math.max(0, Math.min(100, safeNum(val)));
+function setSentiment(val, save){
+  const v = safeNum(val);
   state.market.sentiment = v;
+  const el = document.getElementById("m-sent-val");
+  if(el) el.textContent = String(v);
 
-  // gauge
-  const a = v;
-  const b = 100 - v;
-  state.charts.sentiment.data.datasets[0].data = [a, b];
-  state.charts.sentiment.update();
+  sentimentChart.data.datasets[0].data = [v, Math.max(0, 100-v)];
+  sentimentChart.update();
 
-  setText('gauge-val', String(v));
-
-  let label = 'TRUNG LẬP';
-  if (v <= 25) label = 'SỢ HÃI';
-  else if (v >= 75) label = 'THAM LAM';
-  setText('gauge-label', label);
-
-  if (persist) {
-    state.market.updatedAt = Date.now();
-    saveState();
-  }
+  if(save){ saveState(); rebuildAll(); }
 }
 
-/* ------------------------- WIKI ------------------------- */
-function populateSelects() {
-  // trade setup dropdown
-  const tradeSel = document.getElementById('trade-setup');
-  const radarSel = document.getElementById('radar-setup');
-
-  const options = state.wiki
-    .map((w) => `<option value="${escapeAttr(w.title)}">${escapeHtml(w.title)}</option>`)
-    .join('');
-
-  if (tradeSel) tradeSel.innerHTML = options;
-  if (radarSel) radarSel.innerHTML = options;
-}
-
-function renderWikiGrid() {
-  const grid = document.getElementById('wiki-grid');
-  if (!grid) return;
-
-  grid.innerHTML = state.wiki
-    .map((w) => {
-      const list = (w.checklist || []).slice(0, 4).map((c) => `<li class="text-[10px] text-slate-300 font-bold">• ${escapeHtml(c)}</li>`).join('');
-      return `
-        <div class="glass-panel p-5 hover:border-emerald-500/20 transition cursor-pointer" onclick="openWikiInAnalysis('${w.id}')">
-          <div class="aspect-video rounded-2xl overflow-hidden bg-black/30 border border-white/5">
-            <img src="${escapeAttr(w.img || '')}" onerror="this.style.display='none'" class="w-full h-full object-cover">
-          </div>
-          <div class="mt-4 flex items-center justify-between">
-            <p class="text-xs font-black text-emerald-300 tracking-widest">${escapeHtml(w.title)}</p>
-            <div class="flex gap-2">
-              <button class="btn-chip" onclick="event.stopPropagation(); editWiki('${w.id}')">SỬA</button>
-              <button class="btn-chip" onclick="event.stopPropagation(); deleteWiki('${w.id}')">XOÁ</button>
-            </div>
-          </div>
-          <ul class="mt-3 space-y-1">${list}</ul>
-          <div class="mt-4 grid grid-cols-2 gap-2">
-            <button class="btn-chip" onclick="event.stopPropagation(); openWikiInAnalysis('${w.id}')">PHÂN TÍCH</button>
-            <button class="btn-chip" onclick="event.stopPropagation(); openModal('modal-trade'); primeTradeModal({setup:'${escapeAttr(w.title)}'});">TẠO LỆNH</button>
-          </div>
-        </div>`;
-    })
-    .join('');
-}
-
-function openWikiInAnalysis(wikiId) {
-  state.analysis.selectedWikiId = wikiId;
+function saveMarketSectors(){
+  state.market.sectors = document.getElementById("m-sectors")?.value || "";
   saveState();
-  switchTab('analysis');
-  renderAnalysis();
 }
 
-function saveWiki() {
-  const title = (document.getElementById('wiki-title')?.value || '').trim().toUpperCase();
-  const img = (document.getElementById('wiki-img')?.value || '').trim();
-  const checklistRaw = (document.getElementById('wiki-checklist')?.value || '').trim();
+function suggestSectors(){
+  const list = ["BANK", "CÔNG NGHỆ", "CHỨNG KHOÁN", "BÁN LẺ", "KCN", "DẦU KHÍ"];
+  state.market.sectors = list.sort(()=>Math.random()-0.5).slice(0,3).join(", ");
+  saveState();
+  hydrateMarket();
+}
 
-  if (!title) return alert('Nhập tên mẫu hình.');
+function marketLabel(dist){
+  dist = safeNum(dist);
+  if(dist <= 2) return "BÌNH THƯỜNG";
+  if(dist === 3) return "RỦI RO";
+  if(dist === 4) return "NGUY CƠ CAO";
+  return "TIỀN MẶT";
+}
 
-  const checklist = checklistRaw
-    .split('\n')
-    .map((x) => x.trim())
-    .filter(Boolean);
+function applyMarketToSystem(){
+  alert("Market đã lưu. Hệ thống/Quản lý vốn/Radar sẽ dùng Market hiện tại.");
+  rebuildAll();
+  switchTab("system");
+}
 
-  state.wiki.unshift({
-    id: uid(),
-    title,
-    img: img || '',
-    checklist: checklist.length ? checklist : ['PIVOT RÕ', 'VOL HỖ TRỢ', 'MARKET OK'],
-    createdAt: Date.now(),
+/* =========================
+   ANALYSIS
+========================= */
+function renderAnalysisMenu(){
+  const box = document.getElementById("ana-menu");
+  if(!box) return;
+
+  box.innerHTML = "";
+  state.wiki.forEach(w=>{
+    const div = document.createElement("div");
+    div.className = "menuItem" + (state.analysis.selectedWikiId===w.id ? " active":"");
+    div.innerHTML = `<div style="font-weight:900">${escapeHtml(w.title)}</div>
+                     <div class="muted">Checklist: ${w.checklist?.length||0} ý</div>`;
+    div.onclick = ()=>selectWikiForAnalysis(w.id);
+    box.appendChild(div);
   });
-
-  // reset fields
-  document.getElementById('wiki-title').value = '';
-  document.getElementById('wiki-img').value = '';
-  document.getElementById('wiki-checklist').value = '';
-
-  closeModal('modal-wiki');
-  saveState();
-  updateUI();
-  toast('Đã lưu mẫu hình mới.');
 }
 
-function editWiki(id) {
-  const w = state.wiki.find((x) => x.id === id);
-  if (!w) return;
-  openModal('modal-wiki');
-  document.getElementById('wiki-title').value = w.title || '';
-  document.getElementById('wiki-img').value = w.img || '';
-  document.getElementById('wiki-checklist').value = (w.checklist || []).join('\n');
-
-  // overwrite save action temporarily
-  const old = window.saveWiki;
-  window.saveWiki = function () {
-    w.title = (document.getElementById('wiki-title')?.value || '').trim().toUpperCase();
-    w.img = (document.getElementById('wiki-img')?.value || '').trim();
-    w.checklist = (document.getElementById('wiki-checklist')?.value || '')
-      .split('\n').map((x) => x.trim()).filter(Boolean);
-
-    // restore
-    window.saveWiki = old;
-
-    document.getElementById('wiki-title').value = '';
-    document.getElementById('wiki-img').value = '';
-    document.getElementById('wiki-checklist').value = '';
-
-    closeModal('modal-wiki');
-    saveState();
-    updateUI();
-    toast('Đã cập nhật mẫu hình.');
-  };
-}
-
-function deleteWiki(id) {
-  if (!confirm('Xoá mẫu hình này?')) return;
-  state.wiki = state.wiki.filter((x) => x.id !== id);
-  if (state.analysis.selectedWikiId === id) state.analysis.selectedWikiId = null;
-  saveState();
-  updateUI();
-}
-
-/* ------------------------ ANALYSIS ------------------------ */
-function renderAnalysisMenu() {
-  const menu = document.getElementById('analysis-menu');
-  if (!menu) return;
-
-  menu.innerHTML = state.wiki
-    .map((w) => {
-      const active = state.analysis.selectedWikiId === w.id;
-      return `
-        <button class="w-full text-left px-4 py-3 rounded-2xl border border-white/5 ${active ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-black/20 hover:bg-white/5'}"
-                onclick="openWikiInAnalysis('${w.id}')">
-          <div class="text-[10px] text-slate-400 font-black tracking-widest">MẪU</div>
-          <div class="text-xs font-black mt-1">${escapeHtml(w.title)}</div>
-        </button>`;
-    })
-    .join('');
-}
-
-function renderAnalysis() {
-  const selected = state.wiki.find((w) => w.id === state.analysis.selectedWikiId) || state.wiki[0];
-  if (!selected) return;
-
-  state.analysis.selectedWikiId = selected.id;
-
-  // set standard img
-  const std = document.getElementById('ana-standard-img');
-  if (std) std.src = selected.img || '';
-
-  // set selected label
-  setText('ana-selected', selected.title || '—');
-
-  // checklist
-  const wrap = document.getElementById('ana-checklist');
-  if (wrap) {
-    const ticks = state.analysis.checklistTicks[selected.id] || new Array((selected.checklist || []).length).fill(false);
-    wrap.innerHTML = (selected.checklist || [])
-      .map((c, i) => {
-        const checked = !!ticks[i];
-        return `
-          <label class="flex items-start gap-3 p-4 rounded-2xl bg-black/30 border border-white/5 cursor-pointer">
-            <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleAnalysisCheck('${selected.id}', ${i}, this.checked)" class="trade-check mt-1">
-            <span class="text-[10px] text-slate-200 font-bold">${escapeHtml(c)}</span>
-          </label>`;
-      })
-      .join('');
-  }
-
-  // ready label
-  const hasReal = !!state.analysis.tempImg;
-  const allChecked = (() => {
-    const arr = state.analysis.checklistTicks[selected.id] || [];
-    return (selected.checklist || []).length ? (arr.filter(Boolean).length === (selected.checklist || []).length) : false;
-  })();
-
-  setText('ana-ready', hasReal && allChecked ? 'YES' : 'NO');
-
-  // show transfer button if hasReal
-  const btn = document.getElementById('btn-transfer');
-  if (btn) btn.classList.toggle('hidden', !hasReal);
-
+function selectWikiForAnalysis(id){
+  state.analysis.selectedWikiId = id;
   saveState();
   renderAnalysisMenu();
-}
-
-function toggleAnalysisCheck(wikiId, idx, checked) {
-  const selected = state.wiki.find((w) => w.id === wikiId);
-  if (!selected) return;
-
-  const arr = state.analysis.checklistTicks[wikiId] || new Array((selected.checklist || []).length).fill(false);
-  arr[idx] = checked;
-  state.analysis.checklistTicks[wikiId] = arr;
-
-  saveState();
   renderAnalysis();
 }
 
-function handleSlider(v) {
-  document.getElementById('slider-overlay').style.width = v + '%';
+function triggerAnalysisUpload(){
+  document.getElementById("ana-file")?.click();
 }
 
-function previewRealChart(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
+function onAnalysisPicked(e){
+  const f = e.target.files?.[0];
+  if(!f) return;
   const r = new FileReader();
-  r.onload = () => {
-    document.getElementById('ana-real-img').src = r.result;
-    state.analysis.tempImg = r.result;
-    document.getElementById('ana-empty-hint').classList.add('hidden');
-    document.getElementById('btn-transfer').classList.remove('hidden');
+  r.onload = ()=>{
+    state.analysis.realImg = r.result;
     saveState();
     renderAnalysis();
   };
-  r.readAsDataURL(file);
+  r.readAsDataURL(f);
 }
 
-function resetAnalysis() {
-  state.analysis.tempImg = null;
-  document.getElementById('ana-real-img').src = '';
-  document.getElementById('ana-empty-hint').classList.remove('hidden');
-  document.getElementById('btn-transfer').classList.add('hidden');
+function renderAnalysis(){
+  renderAnalysisMenu();
+  const selected = state.wiki.find(w=>w.id===state.analysis.selectedWikiId) || null;
+
+  setText("ana-selected", selected ? selected.title : "—");
+  setText("ana-market", marketLabel(state.market.distDays));
+
+  const imgTemplate = document.getElementById("img-template");
+  if(imgTemplate) imgTemplate.src = (selected?.img || "");
+
+  const ck = document.getElementById("ana-checklist");
+  if(ck){
+    ck.innerHTML = "";
+    const items = selected?.checklist || [];
+    if(!items.length){
+      ck.innerHTML = `<div class="muted">Chưa có checklist. Hãy tạo mẫu trong Wiki.</div>`;
+    }else{
+      items.forEach((text, idx)=>{
+        const row = document.createElement("label");
+        row.className = "ck";
+        row.innerHTML = `<input type="checkbox" data-idx="${idx}">
+                         <div>${escapeHtml(text)}</div>`;
+        row.querySelector("input").addEventListener("change", updateAnalysisReady);
+        ck.appendChild(row);
+      });
+    }
+  }
+
+  const imgReal = document.getElementById("img-real");
+  const hint = document.getElementById("ana-hint");
+  const slider = document.getElementById("slider");
+
+  if(imgReal) imgReal.src = state.analysis.realImg || "";
+  const hasReal = !!state.analysis.realImg;
+  if(hint) hint.style.display = hasReal ? "none" : "flex";
+
+  // FIX: slider không chặn click khi chưa có ảnh
+  if(slider){
+    if(hasReal) slider.classList.remove("disabled");
+    else slider.classList.add("disabled");
+  }
+
+  moveSlider(50);
+  updateAnalysisReady();
+}
+
+function moveSlider(val){
+  const overlay = document.getElementById("overlay");
+  if(!overlay) return;
+  overlay.style.width = `${safeNum(val)}%`;
+}
+
+function updateAnalysisReady(){
+  const selected = state.wiki.find(w=>w.id===state.analysis.selectedWikiId) || null;
+  const checks = Array.from(document.querySelectorAll("#ana-checklist input[type=checkbox]"));
+  const total = checks.length;
+  const ticked = checks.filter(x=>x.checked).length;
+
+  const checklistOK = total ? (ticked/total >= 0.7) : false;
+  const marketOK = safeNum(state.market.distDays) <= 3;
+  const ready = checklistOK && marketOK && !!state.analysis.realImg && !!selected;
+
+  setText("ana-ready", ready ? "YES" : "NO");
+}
+
+function pushAnalysisToJournal(){
+  const selected = state.wiki.find(w=>w.id===state.analysis.selectedWikiId) || null;
+  if(!selected){
+    alert("Bạn chưa chọn mẫu hình trong Wiki.");
+    return;
+  }
+  openTradeModal();
+  document.getElementById("t-setup").value = selected.title;
+}
+
+function resetAnalysis(){
+  state.analysis.realImg = null;
   saveState();
   renderAnalysis();
 }
 
-function transferToJournal() {
-  // open trade modal, prefill setup + img from analysis
-  switchTab('journal');
-  openModal('modal-trade');
-  const selected = state.wiki.find((w) => w.id === state.analysis.selectedWikiId) || state.wiki[0];
-  primeTradeModal({
-    setup: selected?.title,
-    img: state.analysis.tempImg,
-  });
-  toast('Đã chuyển thông tin từ Phân Tích → Nhật Ký.');
+/* =========================
+   CAPITAL
+========================= */
+function hydrateCapital(){
+  const eq = document.getElementById("cap-equity");
+  const rp = document.getElementById("cap-riskpct");
+  if(eq) eq.value = state.capital.equityOverride || state.capital.base;
+  if(rp) rp.value = state.capital.riskPct ?? 1;
+  renderCapitalTips();
 }
 
-/* ------------------------ JOURNAL ------------------------ */
-function primeTradeModal(prefill = {}) {
-  // default values
-  document.getElementById('trade-date').value = prefill.date || todayISO();
-  document.getElementById('trade-ticker').value = (prefill.ticker || '').toUpperCase();
+function calcPosition(){
+  const equity = safeNum(document.getElementById("cap-equity")?.value);
+  const riskPct = safeNum(document.getElementById("cap-riskpct")?.value);
+  const entry = safeNum(document.getElementById("cap-entry")?.value);
+  const stop = safeNum(document.getElementById("cap-stop")?.value);
 
-  // setup select
-  if (prefill.setup) {
-    const sel = document.getElementById('trade-setup');
-    if (sel) sel.value = prefill.setup;
+  state.capital.equityOverride = equity || state.capital.base;
+  state.capital.riskPct = riskPct || 1;
+  saveState();
+
+  const riskMoney = equity * (riskPct/100);
+  const slRange = Math.max(0, entry - stop);
+  const shares = slRange > 0 ? Math.floor(riskMoney / slRange) : 0;
+  const positionValue = shares * entry;
+
+  setText("cap-riskmoney", fmtVND(riskMoney));
+  setText("cap-slrange", slRange ? slRange.toLocaleString("vi-VN") : "0");
+  setText("cap-shares", shares.toLocaleString("vi-VN") + " CP");
+  setText("cap-position", fmtVND(positionValue));
+}
+
+function pullFromLastTrade(){
+  const last = (state.journal||[]).slice().sort((a,b)=> String(b.date).localeCompare(String(a.date)))[0];
+  if(!last){ alert("Chưa có lệnh nào."); return; }
+  document.getElementById("cap-entry").value = safeNum(last.buy) || "";
+  document.getElementById("cap-stop").value = safeNum(last.stop) || "";
+  calcPosition();
+}
+
+function pushTradeToCapital(){
+  const buy = safeNum(document.getElementById("t-buy")?.value);
+  const stop = safeNum(document.getElementById("t-stop")?.value);
+  if(buy) document.getElementById("cap-entry").value = buy;
+  if(stop) document.getElementById("cap-stop").value = stop;
+  switchTab("capital");
+  calcPosition();
+}
+
+function copyPosition(){
+  const text = [
+    "RISK TIỀN: " + document.getElementById("cap-riskmoney").textContent,
+    "SL RANGE: " + document.getElementById("cap-slrange").textContent,
+    "KHỐI LƯỢNG: " + document.getElementById("cap-shares").textContent,
+    "VỊ THẾ: " + document.getElementById("cap-position").textContent,
+  ].join(" | ");
+  navigator.clipboard?.writeText(text);
+  alert("Đã copy kết quả.");
+}
+
+function renderCapitalTips(){
+  const box = document.getElementById("cap-tips");
+  if(!box) return;
+
+  const dist = safeNum(state.market.distDays);
+  const sent = safeNum(state.market.sentiment);
+
+  const tips = [];
+  tips.push(`Market: <b>${escapeHtml(marketLabel(dist))}</b>`);
+  if(dist >= 5) tips.push("Ưu tiên <b>TIỀN MẶT</b>. Tránh mở lệnh mới.");
+  else if(dist === 4) tips.push("Giảm tỷ trọng mạnh. Chỉ chọn <b>A+</b>.");
+  else if(dist === 3) tips.push("Cẩn trọng. Giảm số lệnh & hạ margin.");
+  else tips.push("Market ổn. Vẫn phải tuân thủ stop-loss.");
+
+  if(sent >= 80) tips.push("Sentiment cao → dễ FOMO. Giữ kỷ luật điểm mua.");
+  if(sent <= 25) tips.push("Sentiment thấp → chỉ mua leader thật sự + nền chặt.");
+
+  // gợi ý theo setup top winrate
+  const top = calcSetupStats().slice(0,1)[0];
+  if(top) tips.push(`Setup hiệu quả nhất hiện tại: <b>${escapeHtml(top.setup)}</b> (Win ${top.winrate.toFixed(0)}%).`);
+
+  tips.push("Quy tắc: <b>Rủi ro/lệnh 0.5–2%</b>, cắt lỗ nhanh, không bình quân giá xuống.");
+
+  box.innerHTML = tips.map(t=>`<div class="tip">${t}</div>`).join("");
+}
+
+/* =========================
+   JOURNAL
+========================= */
+function openTradeModal(tradeId=null){
+  editingTradeId = tradeId;
+
+  const m = document.getElementById("tradeModal");
+  m.classList.remove("hidden");
+
+  document.getElementById("t-date").value = todayISO();
+  document.getElementById("t-ticker").value = "";
+  fillSetupSelect();
+  document.getElementById("t-vol").value = "";
+  document.getElementById("t-buy").value = "";
+  document.getElementById("t-sell").value = "0";
+  document.getElementById("t-stop").value = "";
+  document.getElementById("t-notes").value = "";
+  document.getElementById("t-img-status").textContent = "CHƯA CÓ";
+  document.getElementById("t-img-file").value = "";
+  delete document.getElementById("tradeModal").dataset.tempImg;
+
+  if(tradeId){
+    const t = state.journal.find(x=>x.id===tradeId);
+    if(t){
+      document.getElementById("t-date").value = t.date || todayISO();
+      document.getElementById("t-ticker").value = t.ticker || "";
+      document.getElementById("t-setup").value = t.setup || (state.wiki[0]?.title || "—");
+      document.getElementById("t-vol").value = safeNum(t.vol) || "";
+      document.getElementById("t-buy").value = safeNum(t.buy) || "";
+      document.getElementById("t-sell").value = safeNum(t.sell) || 0;
+      document.getElementById("t-stop").value = safeNum(t.stop) || "";
+      document.getElementById("t-notes").value = t.notes || "";
+      document.getElementById("t-img-status").textContent = t.img ? "ĐÃ CÓ" : "CHƯA CÓ";
+    }
   }
-
-  document.getElementById('trade-vol').value = prefill.vol ?? '';
-  document.getElementById('trade-buy').value = prefill.buy ?? '';
-  document.getElementById('trade-sell').value = prefill.sell ?? '';
-  document.getElementById('trade-sl').value = prefill.sl ?? '';
-  document.getElementById('trade-riskpct').value = prefill.riskPct ?? 2;
-
-  // image
-  if (prefill.img) {
-    state._tradeTempImg = prefill.img;
-    setText('trade-img-status', 'ẢNH ĐÃ CÓ');
-  } else {
-    state._tradeTempImg = null;
-    setText('trade-img-status', 'CHƯA CÓ');
-  }
-
-  // market status
-  setText('trade-market-status', marketLabel());
-
-  // reset checklist
-  document.querySelectorAll('.trade-check').forEach((c) => (c.checked = false));
-  const btn = document.getElementById('btn-save-trade');
-  btn.disabled = true;
-  btn.classList.add('opacity-50');
-
-  // hint
-  setText('trade-tip', `MARKET: ${marketLabel()} | Ngành: ${(state.market.sectors || '—')}`);
 }
 
-function attachTradeImage() {
-  document.getElementById('trade-img')?.click();
+function closeTradeModal(){
+  document.getElementById("tradeModal").classList.add("hidden");
+  editingTradeId = null;
 }
-function onTradeImgPicked(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
+
+function attachTradeImage(){
+  document.getElementById("t-img-file")?.click();
+}
+
+function onTradeImgPicked(e){
+  const f = e.target.files?.[0];
+  if(!f) return;
   const r = new FileReader();
-  r.onload = () => {
-    state._tradeTempImg = r.result;
-    setText('trade-img-status', 'ẢNH ĐÃ CÓ');
+  r.onload = ()=>{
+    document.getElementById("tradeModal").dataset.tempImg = r.result;
+    document.getElementById("t-img-status").textContent = "ĐÃ CHÈN";
   };
-  r.readAsDataURL(file);
+  r.readAsDataURL(f);
 }
 
-function saveTrade() {
-  const date = document.getElementById('trade-date').value || todayISO();
-  const ticker = (document.getElementById('trade-ticker').value || '').trim().toUpperCase();
-  const setup = document.getElementById('trade-setup').value || '—';
-  const vol = safeNum(document.getElementById('trade-vol').value);
-  const buy = safeNum(document.getElementById('trade-buy').value);
-  const sell = safeNum(document.getElementById('trade-sell').value);
-  const sl = safeNum(document.getElementById('trade-sl').value);
-  const riskPct = safeNum(document.getElementById('trade-riskpct').value) || 2;
+function saveTrade(){
+  const date = document.getElementById("t-date").value || todayISO();
+  const ticker = (document.getElementById("t-ticker").value || "").trim().toUpperCase();
+  const setup = document.getElementById("t-setup").value || "—";
+  const vol = safeNum(document.getElementById("t-vol").value);
+  const buy = safeNum(document.getElementById("t-buy").value);
+  const sell = safeNum(document.getElementById("t-sell").value);
+  const stop = safeNum(document.getElementById("t-stop").value);
+  const notes = (document.getElementById("t-notes").value || "").trim();
 
-  if (!ticker) return alert('Nhập mã cổ phiếu.');
-  if (!vol || !buy) return alert('Nhập khối lượng và giá mua.');
+  if(!ticker || !vol || !buy){
+    alert("Thiếu dữ liệu: Mã / Khối lượng / Giá mua.");
+    return;
+  }
 
-  const trade = {
-    id: uid(),
-    date,
+  const tempImg = document.getElementById("tradeModal").dataset.tempImg || null;
+
+  if(editingTradeId){
+    const idx = state.journal.findIndex(x=>x.id===editingTradeId);
+    if(idx>=0){
+      const old = state.journal[idx];
+      state.journal[idx] = { ...old, date, ticker, setup, vol, buy, sell, stop, notes, img: tempImg ? tempImg : old.img };
+    }
+  }else{
+    state.journal.unshift({ id: uid(), date, ticker, setup, vol, buy, sell, stop, notes, img: tempImg || null });
+  }
+
+  delete document.getElementById("tradeModal").dataset.tempImg;
+
+  // radar sync nhẹ: nếu mã chưa có radar thì auto add
+  autoAddRadarFromTrade({ticker, setup});
+
+  saveState();
+  closeTradeModal();
+  renderJournal();
+  rebuildAll();
+}
+
+function renderJournal(){
+  const body = document.getElementById("journalBody");
+  if(!body) return;
+
+  body.innerHTML = "";
+
+  (state.journal||[]).forEach(t=>{
+    const buy = safeNum(t.buy);
+    const sell = safeNum(t.sell);
+    const pct = (sell>0 && buy>0) ? ((sell-buy)/buy)*100 : 0;
+    const status = (sell>0) ? "closed" : "open";
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="mono">${escapeHtml(t.date||"")}</td>
+      <td class="mono">${escapeHtml(t.ticker||"")}</td>
+      <td>${escapeHtml(t.setup||"—")}</td>
+      <td class="right mono">${safeNum(t.vol).toLocaleString("vi-VN")}</td>
+      <td class="right mono">${buy.toLocaleString("vi-VN")}</td>
+      <td class="right mono">${sell ? sell.toLocaleString("vi-VN") : "0"}</td>
+      <td class="right mono">${sell>0 ? fmtPct(pct) : "—"}</td>
+      <td class="center">
+        ${t.img ? `<button class="btn chip" onclick="zoomImage('${t.id}')">Xem</button>` : `<span class="muted">—</span>`}
+      </td>
+      <td class="center">
+        <span class="badge ${status}">${status==="closed" ? "ĐÓNG" : "MỞ"}</span>
+      </td>
+      <td class="center">
+        <div class="row gap" style="justify-content:center">
+          <button class="btn chip" onclick="editTrade('${t.id}')">Sửa</button>
+          <button class="btn chip danger" onclick="deleteTrade('${t.id}')">Xóa</button>
+          ${sell>0 ? `<button class="btn chip" onclick="reopenTrade('${t.id}')">Mở lại</button>` : `<button class="btn chip" onclick="closeTrade('${t.id}')">Đóng</button>`}
+        </div>
+      </td>
+    `;
+    body.appendChild(tr);
+  });
+
+  calculateDashboard();
+}
+
+function editTrade(id){ openTradeModal(id); }
+
+function deleteTrade(id){
+  if(!confirm("Xóa lệnh này?")) return;
+  state.journal = (state.journal||[]).filter(x=>x.id!==id);
+  saveState();
+  renderJournal();
+  rebuildAll();
+}
+
+function closeTrade(id){
+  const t = state.journal.find(x=>x.id===id);
+  if(!t) return;
+  const sell = prompt("Nhập giá bán để đóng lệnh:", String(t.sell||0));
+  if(sell === null) return;
+  t.sell = safeNum(sell);
+  saveState();
+  renderJournal();
+  rebuildAll();
+}
+
+function reopenTrade(id){
+  const t = state.journal.find(x=>x.id===id);
+  if(!t) return;
+  t.sell = 0;
+  saveState();
+  renderJournal();
+  rebuildAll();
+}
+
+function zoomImage(tradeId){
+  const t = state.journal.find(x=>x.id===tradeId);
+  if(!t || !t.img) return;
+  document.getElementById("zoomImg").src = t.img;
+  document.getElementById("zoomModal").classList.remove("hidden");
+}
+
+function closeZoom(){
+  document.getElementById("zoomModal").classList.add("hidden");
+}
+
+function exportJSON(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "trading_journal_pro_v31.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* =========================
+   WIKI
+========================= */
+function renderWiki(){
+  const grid = document.getElementById("wikiGrid");
+  if(!grid) return;
+
+  grid.innerHTML = "";
+
+  state.wiki.forEach(w=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="row between">
+        <div>
+          <div class="sectionTitle">${escapeHtml(w.title)}</div>
+          <div class="sectionSub">Checklist: ${(w.checklist||[]).length} ý</div>
+        </div>
+        <button class="btn chip" onclick="useWikiInAnalysis('${w.id}')">Phân tích</button>
+      </div>
+
+      <div class="mt muted">${escapeHtml((w.checklist||[]).slice(0,4).join(" • "))}${(w.checklist||[]).length>4 ? " ..." : ""}</div>
+
+      <div class="row gap mt">
+        <button class="btn chip" onclick="editWiki('${w.id}')">Sửa</button>
+        <button class="btn chip danger" onclick="deleteWiki('${w.id}')">Xóa</button>
+        ${w.img ? `<button class="btn chip" onclick="zoomWiki('${w.id}')">Xem ảnh</button>` : `<span class="muted">Chưa có ảnh</span>`}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  fillSetupSelect();
+  renderAnalysisMenu();
+  renderSystem();
+}
+
+function useWikiInAnalysis(id){
+  state.analysis.selectedWikiId = id;
+  saveState();
+  switchTab("analysis");
+  renderAnalysis();
+}
+
+function openWikiModal(id=null){
+  editingWikiId = id;
+  document.getElementById("wikiModal").classList.remove("hidden");
+
+  document.getElementById("w-title").value = "";
+  document.getElementById("w-checklist").value = "";
+  document.getElementById("w-img-status").textContent = "CHƯA CÓ";
+  document.getElementById("w-img-file").value = "";
+  document.getElementById("wikiModal").dataset.tempImg = "";
+
+  if(id){
+    const w = state.wiki.find(x=>x.id===id);
+    if(w){
+      document.getElementById("w-title").value = w.title || "";
+      document.getElementById("w-checklist").value = (w.checklist||[]).join("\n");
+      document.getElementById("w-img-status").textContent = w.img ? "ĐÃ CÓ" : "CHƯA CÓ";
+    }
+  }
+}
+
+function closeWikiModal(){
+  document.getElementById("wikiModal").classList.add("hidden");
+  editingWikiId = null;
+}
+
+function attachWikiImage(){ document.getElementById("w-img-file")?.click(); }
+
+function onWikiImgPicked(e){
+  const f = e.target.files?.[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    document.getElementById("wikiModal").dataset.tempImg = r.result;
+    document.getElementById("w-img-status").textContent = "ĐÃ CHÈN";
+  };
+  r.readAsDataURL(f);
+}
+
+function clearWikiImage(){
+  document.getElementById("wikiModal").dataset.tempImg = "";
+  document.getElementById("w-img-status").textContent = "CHƯA CÓ";
+  const f = document.getElementById("w-img-file");
+  if(f) f.value = "";
+}
+
+function saveWiki(){
+  const title = (document.getElementById("w-title").value || "").trim().toUpperCase();
+  const checklistRaw = (document.getElementById("w-checklist").value || "").trim();
+  const checklist = checklistRaw ? checklistRaw.split("\n").map(x=>x.trim()).filter(Boolean) : [];
+
+  if(!title){
+    alert("Thiếu tên mẫu.");
+    return;
+  }
+
+  const tempImg = document.getElementById("wikiModal").dataset.tempImg || "";
+
+  if(editingWikiId){
+    const idx = state.wiki.findIndex(x=>x.id===editingWikiId);
+    if(idx>=0){
+      const old = state.wiki[idx];
+      state.wiki[idx] = { ...old, title, checklist, img: tempImg ? tempImg : old.img };
+    }
+  }else{
+    state.wiki.unshift({ id: uid(), title, checklist, img: tempImg || "", createdAt: Date.now() });
+  }
+
+  document.getElementById("wikiModal").dataset.tempImg = "";
+
+  saveState();
+  closeWikiModal();
+  renderWiki();
+}
+
+function editWiki(id){ openWikiModal(id); }
+
+function deleteWiki(id){
+  if(!confirm("Xóa mẫu hình này?")) return;
+  state.wiki = (state.wiki||[]).filter(x=>x.id!==id);
+
+  if(state.analysis.selectedWikiId === id){
+    state.analysis.selectedWikiId = null;
+  }
+
+  saveState();
+  renderWiki();
+  renderAnalysis();
+}
+
+function zoomWiki(id){
+  const w = state.wiki.find(x=>x.id===id);
+  if(!w || !w.img) return;
+  document.getElementById("zoomImg").src = w.img;
+  document.getElementById("zoomModal").classList.remove("hidden");
+}
+
+/* =========================
+   RADAR
+========================= */
+function scoreRadar(r){
+  // Weighted score
+  const rs = safeNum(r.rs), vol = safeNum(r.vol), base = safeNum(r.base), trend = safeNum(r.trend), mf = safeNum(r.marketfit);
+  const w = { rs:.25, vol:.20, base:.25, trend:.15, mf:.15 };
+  return Math.round(rs*w.rs + vol*w.vol + base*w.base + trend*w.trend + mf*w.mf);
+}
+
+function actionByScore(score){
+  if(score >= 80) return "BREAKOUT";
+  if(score >= 60) return "WATCH";
+  if(score >= 40) return "EARLY";
+  return "AVOID";
+}
+
+function renderRadar(){
+  const body = document.getElementById("radarBody");
+  if(!body) return;
+
+  const list = (state.radar||[]).map(x => ({...x, score: scoreRadar(x)}));
+
+  body.innerHTML = "";
+  list.forEach(r=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="mono">${escapeHtml(r.ticker)}</td>
+      <td>${escapeHtml(r.setup||"—")}</td>
+      <td class="right mono">${r.score}</td>
+      <td class="center"><span class="badge ${r.score>=60 ? "closed":"open"}">${escapeHtml(actionByScore(r.score))}</span></td>
+      <td class="center">
+        <div class="row gap" style="justify-content:center">
+          <button class="btn chip" onclick="selectRadar('${r.id}')">Xem</button>
+          <button class="btn chip" onclick="editRadar('${r.id}')">Sửa</button>
+          <button class="btn chip danger" onclick="deleteRadar('${r.id}')">Xóa</button>
+        </div>
+      </td>
+    `;
+    body.appendChild(tr);
+  });
+
+  // auto select first
+  if(list.length){
+    if(!state.radarSelectedId || !state.radar.find(x=>x.id===state.radarSelectedId)){
+      state.radarSelectedId = list[0].id;
+    }
+    selectRadar(state.radarSelectedId, false);
+  }else{
+    setText("r-selected","—");
+    setText("r-score","0");
+    setText("r-action","—");
+    radarChart.data.datasets[0].data = [0,0,0,0,0];
+    radarChart.update();
+  }
+}
+
+function sortRadar(by){
+  if(by === "score"){
+    state.radar.sort((a,b)=> scoreRadar(b)-scoreRadar(a));
+    saveState();
+    renderRadar();
+  }
+}
+
+function openRadarModal(id=null){
+  editingRadarId = id;
+  document.getElementById("radarModal").classList.remove("hidden");
+
+  fillSetupSelect();
+  document.getElementById("rm-ticker").value = "";
+  document.getElementById("rm-notes").value = "";
+  document.getElementById("rm-rs").value = 70;
+  document.getElementById("rm-vol").value = 65;
+  document.getElementById("rm-base").value = 75;
+  document.getElementById("rm-trend").value = 60;
+  document.getElementById("rm-marketfit").value = 70;
+
+  if(id){
+    const r = state.radar.find(x=>x.id===id);
+    if(r){
+      document.getElementById("rm-ticker").value = r.ticker || "";
+      document.getElementById("rm-setup").value = r.setup || (state.wiki[0]?.title || "—");
+      document.getElementById("rm-rs").value = safeNum(r.rs);
+      document.getElementById("rm-vol").value = safeNum(r.vol);
+      document.getElementById("rm-base").value = safeNum(r.base);
+      document.getElementById("rm-trend").value = safeNum(r.trend);
+      document.getElementById("rm-marketfit").value = safeNum(r.marketfit);
+      document.getElementById("rm-notes").value = r.notes || "";
+    }
+  }
+}
+
+function closeRadarModal(){
+  document.getElementById("radarModal").classList.add("hidden");
+  editingRadarId = null;
+}
+
+function saveRadar(){
+  const ticker = (document.getElementById("rm-ticker").value || "").trim().toUpperCase();
+  const setup = document.getElementById("rm-setup").value || "—";
+  if(!ticker){ alert("Thiếu mã."); return; }
+
+  const data = {
     ticker,
     setup,
-    vol,
-    buy,
-    sell: sell > 0 ? sell : 0,
-    sl: sl || 0,
-    riskPct,
-    img: state._tradeTempImg || null,
-    notes: '',
-    createdAt: Date.now(),
-    marketSnapshot: {
-      distDays: state.market.distDays,
-      sentiment: state.market.sentiment,
-      sectors: state.market.sectors,
-      label: marketLabel(),
-    },
+    rs: safeNum(document.getElementById("rm-rs").value),
+    vol: safeNum(document.getElementById("rm-vol").value),
+    base: safeNum(document.getElementById("rm-base").value),
+    trend: safeNum(document.getElementById("rm-trend").value),
+    marketfit: safeNum(document.getElementById("rm-marketfit").value),
+    notes: (document.getElementById("rm-notes").value || "").trim()
   };
 
-  state.journal.unshift(trade);
-
-  // clean temp img only for trade modal (keep analysis tempImg separate)
-  state._tradeTempImg = null;
-
-  saveState();
-  closeModal('modal-trade');
-  updateUI();
-  toast('Đã lưu lệnh.');
-}
-
-function renderJournal() {
-  const body = document.getElementById('journal-list');
-  if (!body) return;
-
-  const closed = state.journal.filter((t) => safeNum(t.sell) > 0);
-  const totalPnL = closed.reduce((acc, t) => acc + (safeNum(t.sell) - safeNum(t.buy)) * safeNum(t.vol), 0);
-
-  setText('journal-pnl-sum', fmtVND(totalPnL));
-  setText('journal-sub', `TÍNH TỪ ${closed.length} LỆNH ĐÓNG`);
-
-  // summary cards
-  setText('j-count', state.journal.length);
-  setText('j-closed', closed.length);
-  setText('j-open', state.journal.length - closed.length);
-
-  // avg % for closed trades
-  const avgPct =
-    closed.length
-      ? closed.reduce((acc, t) => acc + ((safeNum(t.sell) - safeNum(t.buy)) / Math.max(1, safeNum(t.buy))) * 100, 0) / closed.length
-      : 0;
-  setText('j-avg', (avgPct >= 0 ? '+' : '') + avgPct.toFixed(1) + '%');
-
-  body.innerHTML = state.journal
-    .map((t) => {
-      const pnl = safeNum(t.sell) > 0 ? (safeNum(t.sell) - safeNum(t.buy)) * safeNum(t.vol) : 0;
-      const pnlClass = pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
-      const isOpen = safeNum(t.sell) === 0;
-
-      return `
-        <tr class="uppercase font-bold">
-          <td class="p-5 text-slate-300 font-mono">${escapeHtml(t.date || '—')}</td>
-          <td class="p-5">${escapeHtml(t.ticker || '—')}</td>
-          <td class="p-5 text-center">
-            ${t.img ? `<button class="btn-chip" onclick="zoomImage('${escapeAttr(t.img)}')">XEM</button>` : `<span class="text-slate-600">—</span>`}
-          </td>
-          <td class="p-5">
-            <div class="flex items-center justify-between gap-2">
-              <span>${escapeHtml(t.setup || '—')}</span>
-              <button class="btn-chip" onclick="openSetupFromJournal('${escapeAttr(t.setup || '')}')">PHÂN TÍCH</button>
-            </div>
-            <div class="text-[10px] text-slate-500 mt-1">
-              MARKET: ${escapeHtml(t.marketSnapshot?.label || '—')}
-            </div>
-          </td>
-          <td class="p-5 text-right font-mono">${safeNum(t.vol).toLocaleString('vi-VN')}</td>
-          <td class="p-5 text-right font-mono">
-            <div>${safeNum(t.buy).toLocaleString('vi-VN')}</div>
-            <div class="text-slate-400">${isOpen ? '—' : safeNum(t.sell).toLocaleString('vi-VN')}</div>
-          </td>
-          <td class="p-5 text-right font-black ${isOpen ? 'text-slate-600' : pnlClass}">
-            ${isOpen ? 'OPEN' : fmtVND(pnl)}
-          </td>
-          <td class="p-5">
-            <div class="flex justify-center gap-2">
-              <button class="btn-chip" onclick="editTrade('${t.id}')">SỬA</button>
-              <button class="btn-chip" onclick="closeTrade('${t.id}')">${isOpen ? 'ĐÓNG' : 'MỞ LẠI'}</button>
-              <button class="btn-chip" onclick="deleteTrade('${t.id}')">XOÁ</button>
-            </div>
-          </td>
-        </tr>`;
-    })
-    .join('');
-
-  // keep dashboard fresh
-  calculateStats();
-}
-
-function openSetupFromJournal(setupTitle) {
-  const w = state.wiki.find((x) => (x.title || '') === setupTitle);
-  if (w) openWikiInAnalysis(w.id);
-  else switchTab('analysis');
-}
-
-function deleteTrade(id) {
-  if (!confirm('Xoá lệnh này?')) return;
-  state.journal = state.journal.filter((t) => t.id !== id);
-  saveState();
-  updateUI();
-}
-
-function closeTrade(id) {
-  const t = state.journal.find((x) => x.id === id);
-  if (!t) return;
-
-  if (safeNum(t.sell) === 0) {
-    const p = prompt(`Nhập GIÁ BÁN để đóng lệnh ${t.ticker}:`, String(t.buy));
-    const sell = safeNum(p);
-    if (!sell) return;
-    t.sell = sell;
-  } else {
-    // reopen
-    if (!confirm('Đưa lệnh về trạng thái OPEN (sell=0)?')) return;
-    t.sell = 0;
+  if(editingRadarId){
+    const idx = state.radar.findIndex(x=>x.id===editingRadarId);
+    if(idx>=0){
+      state.radar[idx] = { ...state.radar[idx], ...data };
+    }
+  }else{
+    // tránh trùng ticker
+    const exist = state.radar.find(x=>x.ticker===ticker);
+    if(exist){
+      exist.setup = data.setup;
+      exist.rs = data.rs; exist.vol=data.vol; exist.base=data.base; exist.trend=data.trend; exist.marketfit=data.marketfit;
+      exist.notes=data.notes;
+    }else{
+      state.radar.unshift({ id: uid(), ...data, createdAt: Date.now() });
+    }
   }
+
   saveState();
-  updateUI();
+  closeRadarModal();
+  renderRadar();
 }
 
-function editTrade(id) {
-  const t = state.journal.find((x) => x.id === id);
-  if (!t) return;
+function editRadar(id){ openRadarModal(id); }
 
-  openModal('modal-trade');
-  // prefill modal
-  primeTradeModal({
-    date: t.date,
-    ticker: t.ticker,
-    setup: t.setup,
-    vol: t.vol,
-    buy: t.buy,
-    sell: t.sell,
-    sl: t.sl,
-    riskPct: t.riskPct,
-    img: t.img,
+function deleteRadar(id){
+  if(!confirm("Xóa mã này khỏi radar?")) return;
+  state.radar = state.radar.filter(x=>x.id!==id);
+  saveState();
+  renderRadar();
+}
+
+function selectRadar(id, save=true){
+  state.radarSelectedId = id;
+  const r = state.radar.find(x=>x.id===id);
+  if(!r) return;
+
+  const score = scoreRadar(r);
+  setText("r-selected", r.ticker);
+  setText("r-score", score);
+  setText("r-action", actionByScore(score));
+
+  radarChart.data.datasets[0].data = [safeNum(r.rs), safeNum(r.vol), safeNum(r.base), safeNum(r.trend), safeNum(r.marketfit)];
+  radarChart.update();
+
+  // đẩy sang capital (entry/stop người dùng tự nhập) -> chỉ gợi ý
+  if(save){ saveState(); }
+}
+
+function syncRadarFromJournal(){
+  const tickers = [...new Set((state.journal||[]).map(t=>String(t.ticker||"").toUpperCase()).filter(Boolean))];
+  tickers.forEach(tk=>{
+    if(!state.radar.find(r=>r.ticker===tk)){
+      state.radar.push({ id: uid(), ticker: tk, setup: (state.wiki[0]?.title||"—"), rs:60, vol:60, base:60, trend:60, marketfit:60, notes:"sync from journal", createdAt: Date.now() });
+    }
+  });
+  saveState();
+  renderRadar();
+  alert("Đã sync Radar từ Nhật ký.");
+}
+
+function autoAddRadarFromTrade(tr){
+  const tk = String(tr.ticker||"").toUpperCase();
+  if(!tk) return;
+  if(!state.radar.find(r=>r.ticker===tk)){
+    state.radar.unshift({ id: uid(), ticker: tk, setup: tr.setup||"—", rs:60, vol:60, base:60, trend:60, marketfit:60, notes:"auto from trade", createdAt: Date.now() });
+  }
+}
+
+/* =========================
+   SYSTEM
+========================= */
+function calcSetupStats(){
+  const closed = (state.journal||[]).filter(t => safeNum(t.sell)>0 && safeNum(t.buy)>0);
+  const map = new Map(); // setup -> stats
+
+  closed.forEach(t=>{
+    const setup = t.setup || "—";
+    const buy = safeNum(t.buy), sell = safeNum(t.sell), vol = safeNum(t.vol);
+    const pnl = (sell-buy)*vol;
+    const pct = buy>0 ? ((sell-buy)/buy)*100 : 0;
+
+    if(!map.has(setup)) map.set(setup, { setup, count:0, wins:0, pnl:0, sumPct:0 });
+    const s = map.get(setup);
+    s.count++;
+    s.pnl += pnl;
+    s.sumPct += pct;
+    if(pnl >= 0) s.wins++;
   });
 
-  // overwrite save handler temporarily
-  const old = window.saveTrade;
-  window.saveTrade = function () {
-    t.date = document.getElementById('trade-date').value || t.date;
-    t.ticker = (document.getElementById('trade-ticker').value || t.ticker).trim().toUpperCase();
-    t.setup = document.getElementById('trade-setup').value || t.setup;
-    t.vol = safeNum(document.getElementById('trade-vol').value) || t.vol;
-    t.buy = safeNum(document.getElementById('trade-buy').value) || t.buy;
-    t.sell = safeNum(document.getElementById('trade-sell').value) || 0;
-    t.sl = safeNum(document.getElementById('trade-sl').value) || 0;
-    t.riskPct = safeNum(document.getElementById('trade-riskpct').value) || t.riskPct;
-    t.img = state._tradeTempImg || t.img || null;
+  const arr = [...map.values()].map(x=>{
+    const winrate = x.count ? (x.wins/x.count)*100 : 0;
+    const avgPct = x.count ? (x.sumPct/x.count) : 0;
+    return { ...x, winrate, avgPct };
+  });
 
-    // restore
-    window.saveTrade = old;
-    state._tradeTempImg = null;
-
-    saveState();
-    closeModal('modal-trade');
-    updateUI();
-    toast('Đã cập nhật lệnh.');
-  };
+  arr.sort((a,b)=> b.winrate - a.winrate || b.pnl - a.pnl);
+  return arr;
 }
 
-function exportJournal() {
-  const data = JSON.stringify(state.journal, null, 2);
-  navigator.clipboard?.writeText(data);
-  alert('Đã copy JSON vào clipboard (nếu trình duyệt cho phép).');
-}
-
-/* ------------------------- RADAR ------------------------- */
-function autoImportFromJournal() {
-  const tickers = [...new Set(state.journal.map((t) => (t.ticker || '').toUpperCase()).filter(Boolean))];
-  const exist = new Set(state.radar.map((r) => r.ticker));
-  const setupFallback = state.wiki[0]?.title || '—';
-
-  tickers.forEach((tk) => {
-    if (exist.has(tk)) return;
-    state.radar.unshift({
-      id: uid(),
-      ticker: tk,
-      setup: setupFallback,
-      price: 0,
-      pivot: 0,
-      score: 60,
-      createdAt: Date.now(),
+function renderSystem(){
+  // setup ranking table
+  const tbody = document.getElementById("sysSetupBody");
+  if(tbody){
+    const stats = calcSetupStats();
+    tbody.innerHTML = stats.length ? "" : `<tr><td colspan="5" class="muted">Chưa có lệnh đóng để thống kê.</td></tr>`;
+    stats.forEach(s=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(s.setup)}</td>
+        <td class="right mono">${s.count}</td>
+        <td class="right mono">${s.winrate.toFixed(0)}%</td>
+        <td class="right mono">${s.avgPct.toFixed(2)}%</td>
+        <td class="right mono">${fmtVND(s.pnl)}</td>
+      `;
+      tbody.appendChild(tr);
     });
+  }
+
+  // trades per month chart
+  const map = new Map(); // ym -> count
+  (state.journal||[]).forEach(t=>{
+    const ym = String(t.date||"").slice(0,7) || "NA";
+    map.set(ym, (map.get(ym)||0) + 1);
+  });
+  const labels = [...map.keys()].sort();
+  const data = labels.map(k=>map.get(k));
+  if(sysTradesChart){
+    sysTradesChart.data.labels = labels.length ? labels : ["—"];
+    sysTradesChart.data.datasets[0].data = labels.length ? data : [0];
+    sysTradesChart.update();
+  }
+
+  // tips
+  const tipsBox = document.getElementById("sysTips");
+  if(tipsBox){
+    const dist = safeNum(state.market.distDays);
+    const stats = calcSetupStats();
+    const top = stats[0];
+    const msg = [];
+    msg.push(`Market: <b>${escapeHtml(marketLabel(dist))}</b> • Distribution: <b>${dist}</b>`);
+    if(top) msg.push(`Setup mạnh nhất: <b>${escapeHtml(top.setup)}</b> (Win ${top.winrate.toFixed(0)}%, Avg ${top.avgPct.toFixed(1)}%).`);
+    if(dist>=4) msg.push("Gợi ý: <b>giảm tần suất giao dịch</b>, ưu tiên bảo toàn vốn.");
+    else msg.push("Gợi ý: chọn <b>A+</b>, chỉ mua khi market + setup đồng thuận.");
+    tipsBox.innerHTML = msg.map(t=>`<div class="tip">${t}</div>`).join("");
+  }
+
+  // setup picker + checklist
+  fillSetupSelect();
+  renderSystemChecklist();
+}
+
+function renderSystemChecklist(){
+  const sel = document.getElementById("sysPickSetup");
+  const box = document.getElementById("sysChecklist");
+  if(!sel || !box) return;
+
+  const setupTitle = sel.value;
+  const w = state.wiki.find(x=>x.title===setupTitle);
+
+  box.innerHTML = "";
+  const items = w?.checklist || [];
+  if(!items.length){
+    box.innerHTML = `<div class="muted">Chưa có checklist cho setup này. Hãy bổ sung trong Wiki.</div>`;
+    return;
+  }
+
+  items.forEach(text=>{
+    const row = document.createElement("div");
+    row.className = "ck";
+    row.innerHTML = `<input type="checkbox"><div>${escapeHtml(text)}</div>`;
+    box.appendChild(row);
+  });
+}
+
+/* =========================
+   SETTINGS + IMPORT CSV/JSON
+========================= */
+function applySettingsUI(){
+  const marquee = document.getElementById("marqueeText");
+  if(marquee){
+    const t = state.settings.marquee || "";
+    marquee.textContent = t + t; // lặp để chạy mượt
+  }
+}
+
+function hydrateSettings(){
+  const base = document.getElementById("s-base");
+  const risk = document.getElementById("s-risk");
+  const marq = document.getElementById("s-marquee");
+
+  if(base) base.value = safeNum(state.capital.base);
+  if(risk) risk.value = safeNum(state.capital.riskPct);
+  if(marq) marq.value = state.settings.marquee || "";
+}
+
+function saveSettings(){
+  state.capital.base = safeNum(document.getElementById("s-base")?.value) || state.capital.base;
+  state.capital.riskPct = safeNum(document.getElementById("s-risk")?.value) || state.capital.riskPct;
+  state.settings.marquee = document.getElementById("s-marquee")?.value || state.settings.marquee;
+
+  saveState();
+  applySettingsUI();
+  rebuildAll();
+  alert("Đã lưu cài đặt.");
+}
+
+function triggerImport(){
+  document.getElementById("importFile")?.click();
+}
+
+function onImportJSON(e){
+  const f = e.target.files?.[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const data = JSON.parse(r.result);
+      // merge soft
+      const d = defaultState();
+      state = {
+        ...d,
+        ...data,
+        settings: {...d.settings, ...(data.settings||{})},
+        capital: {...d.capital, ...(data.capital||{})},
+        market: {...d.market, ...(data.market||{})},
+        analysis: {...d.analysis, ...(data.analysis||{})},
+        wiki: Array.isArray(data.wiki)?data.wiki:[],
+        journal: Array.isArray(data.journal)?data.journal:[],
+        radar: Array.isArray(data.radar)?data.radar:[]
+      };
+      saveState();
+      hydrateAll();
+      rebuildAll();
+      alert("Import JSON thành công.");
+    }catch(err){
+      alert("File JSON lỗi.");
+    }
+  };
+  r.readAsText(f);
+}
+
+function pasteCSVSample(){
+  const box = document.getElementById("csvBox");
+  if(!box) return;
+  box.value =
+`2026-03-01,FPT,VCP,1000,120000,0,114000,breakout
+2026-03-02,VCB,NỀN PHẲNG,500,92000,98000,88000,ok
+2026-03-03,MWG,CỐC TAY CẦM,800,47000,52000,44500,good`;
+}
+
+function clearCSV(){
+  const box = document.getElementById("csvBox");
+  if(box) box.value = "";
+  setText("csvMsg","—");
+}
+
+function importCSV(){
+  const raw = document.getElementById("csvBox")?.value || "";
+  const msg = document.getElementById("csvMsg");
+  if(!raw.trim()){
+    if(msg) msg.textContent = "CSV trống.";
+    return;
+  }
+
+  const lines = raw.split("\n").map(x=>x.trim()).filter(Boolean);
+  let ok=0, fail=0;
+
+  lines.forEach(line=>{
+    const parts = line.split(",").map(x=>x.trim());
+    if(parts.length < 7){ fail++; return; }
+
+    const [date,ticker,setup,vol,buy,sell,stop,...rest] = parts;
+    const notes = rest.join(",");
+
+    const t = {
+      id: uid(),
+      date: date || todayISO(),
+      ticker: (ticker||"").toUpperCase(),
+      setup: setup || "—",
+      vol: safeNum(vol),
+      buy: safeNum(buy),
+      sell: safeNum(sell),
+      stop: safeNum(stop),
+      notes: notes || "",
+      img: null
+    };
+
+    if(!t.ticker || !t.vol || !t.buy){ fail++; return; }
+    state.journal.unshift(t);
+    autoAddRadarFromTrade(t);
+    ok++;
   });
 
   saveState();
-  renderRadar();
-  toast('Đã import mã từ Nhật Ký → Radar.');
+  rebuildAll();
+  renderJournal();
+  if(msg) msg.textContent = `IMPORT xong: OK ${ok} • FAIL ${fail}`;
 }
 
-function addRadar() {
-  const ticker = (document.getElementById('radar-ticker').value || '').trim().toUpperCase();
-  const price = safeNum(document.getElementById('radar-price').value);
-  const pivot = safeNum(document.getElementById('radar-pivot').value);
-  const setup = document.getElementById('radar-setup').value || '—';
-  const score = Math.max(0, Math.min(100, safeNum(document.getElementById('radar-score').value)));
-
-  if (!ticker) return alert('Nhập mã.');
-  if (state.radar.some((x) => x.ticker === ticker)) return alert('Mã đã tồn tại trong radar.');
-
-  state.radar.unshift({ id: uid(), ticker, setup, price, pivot, score: score || 60, createdAt: Date.now() });
-
-  // reset
-  document.getElementById('radar-ticker').value = '';
-  document.getElementById('radar-price').value = '';
-  document.getElementById('radar-pivot').value = '';
-  document.getElementById('radar-score').value = '';
-
+/* =========================
+   RESET
+========================= */
+function hardReset(){
+  if(!confirm("RESET toàn bộ dữ liệu?")) return;
+  localStorage.removeItem(KEY);
+  state = defaultState();
   saveState();
-  renderRadar();
+  hydrateAll();
+  rebuildAll();
+  switchTab("dashboard");
 }
 
-function sortRadar(mode) {
-  state.ui.radarSort = mode;
-  saveState();
-  renderRadar();
-}
-
-function renderRadar() {
-  const body = document.getElementById('radar-body');
-  if (!body) return;
-
-  let list = [...state.radar];
-
-  if (state.ui.radarSort === 'score') {
-    list.sort((a, b) => safeNum(b.score) - safeNum(a.score));
-  } else if (state.ui.radarSort === 'nearPivot') {
-    list.sort((a, b) => Math.abs(pctToPivot(a)) - Math.abs(pctToPivot(b)));
-  }
-
-  const nearCount = list.filter((r) => Math.abs(pctToPivot(r)) <= 2 && safeNum(r.pivot) > 0 && safeNum(r.price) > 0).length;
-  const topScore = list.length ? safeNum(list[0].score) : 0;
-
-  setText('radar-count', list.length);
-  setText('radar-near', nearCount);
-  setText('radar-top', topScore);
-
-  body.innerHTML = list
-    .map((r) => {
-      const pct = pctToPivot(r);
-      const pctClass = Math.abs(pct) <= 2 ? 'text-emerald-400' : 'text-slate-300';
-      return `
-        <tr class="uppercase font-bold">
-          <td class="p-4">${escapeHtml(r.ticker)}</td>
-          <td class="p-4">${escapeHtml(r.setup || '—')}</td>
-          <td class="p-4 text-right font-mono">${safeNum(r.price).toLocaleString('vi-VN')}</td>
-          <td class="p-4 text-right font-mono">${safeNum(r.pivot).toLocaleString('vi-VN')}</td>
-          <td class="p-4 text-right font-mono ${pctClass}">${Number.isFinite(pct) ? (pct > 0 ? '+' : '') + pct.toFixed(1) + '%' : '—'}</td>
-          <td class="p-4 text-center font-mono">${safeNum(r.score)}</td>
-          <td class="p-4 text-center">
-            <div class="flex justify-center gap-2">
-              <button class="btn-chip" onclick="radarToAnalysis('${r.id}')">PHÂN TÍCH</button>
-              <button class="btn-chip" onclick="radarToTrade('${r.id}')">TẠO LỆNH</button>
-              <button class="btn-chip" onclick="deleteRadar('${r.id}')">XOÁ</button>
-            </div>
-          </td>
-        </tr>`;
-    })
-    .join('');
-}
-
-function pctToPivot(r) {
-  const p = safeNum(r.price);
-  const pv = safeNum(r.pivot);
-  if (!p || !pv) return Number.NaN;
-  return ((p - pv) / pv) * 100;
-}
-
-function radarToAnalysis(id) {
-  const r = state.radar.find((x) => x.id === id);
-  if (!r) return;
-  const w = state.wiki.find((x) => x.title === r.setup) || state.wiki[0];
-  if (w) openWikiInAnalysis(w.id);
-  else switchTab('analysis');
-}
-
-function radarToTrade(id) {
-  const r = state.radar.find((x) => x.id === id);
-  if (!r) return;
-  openModal('modal-trade');
-  primeTradeModal({
-    ticker: r.ticker,
-    setup: r.setup,
-    buy: r.price || '',
-    riskPct: 2,
-  });
-  toast('Radar → Nhật ký: đã prefill ticker/setup/giá.');
-}
-
-function deleteRadar(id) {
-  if (!confirm('Xoá mã khỏi radar?')) return;
-  state.radar = state.radar.filter((x) => x.id !== id);
-  saveState();
-  renderRadar();
-}
-
-/* ------------------------- CAPITAL ------------------------- */
-function calcRisk() {
-  const total = safeNum(document.getElementById('v-total')?.value ?? state.totalCapital);
-  const n = Math.max(1, safeNum(document.getElementById('v-n')?.value ?? 1));
-  const riskPct = safeNum(document.getElementById('c-risk')?.value ?? 0);
-  const buy = safeNum(document.getElementById('c-buy')?.value ?? 0);
-  const sl = safeNum(document.getElementById('c-sl')?.value ?? 0);
-
-  // sync capital to state if user edits
-  state.totalCapital = total;
-
-  setText('v-per-stock', fmtVND(total / n));
-  const riskAmt = total * (riskPct / 100);
-  setText('cap-risk-amt', 'RỦI RO TIỀN: ' + fmtVND(riskAmt));
-
-  if (buy > sl && buy > 0 && sl > 0) {
-    setText('c-vol-res', Math.floor(riskAmt / (buy - sl)).toLocaleString('vi-VN') + ' CP');
-  } else {
-    setText('c-vol-res', '0 CP');
-  }
-
-  saveState();
-}
-
-function pullFromLastTrade() {
-  const last = state.journal[0];
-  if (!last) return alert('Chưa có lệnh.');
-  document.getElementById('c-buy').value = last.buy || '';
-  document.getElementById('c-sl').value = last.sl || '';
-  calcRisk();
-  toast('Đã lấy giá mua/SL từ lệnh gần nhất.');
-}
-
-function pushTradeToCapital() {
-  const buy = document.getElementById('trade-buy').value;
-  const sl = document.getElementById('trade-sl').value;
-  const riskPct = document.getElementById('trade-riskpct').value || 2;
-
-  document.getElementById('c-buy').value = buy;
-  document.getElementById('c-sl').value = sl;
-  document.getElementById('c-risk').value = riskPct;
-
-  switchTab('capital');
-  calcRisk();
-  toast('Đã đẩy Buy/SL/Risk% sang tab Vốn.');
-}
-
-/* ------------------------- LIBRARY ------------------------- */
-function renderLibrary() {
-  const grid = document.getElementById('library-grid');
-  if (!grid) return;
-
-  grid.innerHTML = state.library
-    .map(
-      (x) => `
-      <div class="glass-panel p-6 border border-white/5">
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-black text-sky-300">${escapeHtml(x.title)}</h3>
-          <button class="btn-chip" onclick="deleteLibrary('${x.id}')">XOÁ</button>
-        </div>
-        <p class="text-[10px] text-slate-400 mt-2 font-bold">${escapeHtml(x.desc || '')}</p>
-        <p class="text-[11px] text-slate-200 mt-4 font-bold normal-case">${escapeHtml(x.content || '')}</p>
-      </div>`
-    )
-    .join('');
-}
-
-function addLibraryNote() {
-  const title = prompt('Tiêu đề ghi chú:', 'GHI CHÚ');
-  if (!title) return;
-  const content = prompt('Nội dung:', '…');
-  state.library.unshift({
-    id: uid(),
-    title: String(title).toUpperCase(),
-    desc: 'Ghi chú cá nhân',
-    content: content || '',
-    createdAt: Date.now(),
-  });
-  saveState();
-  renderLibrary();
-}
-
-function deleteLibrary(id) {
-  if (!confirm('Xoá ghi chú?')) return;
-  state.library = state.library.filter((x) => x.id !== id);
-  saveState();
-  renderLibrary();
-}
-
-/* ----------------------- PSYCHOLOGY ---------------------- */
-function hydratePsyInputs() {
-  const note = document.getElementById('psy-note');
-  if (note) note.value = state.psychology.note || '';
-}
-function toggleHabit(key) {
-  state.psychology.habits[key] = !state.psychology.habits[key];
-  state.psychology.updatedAt = Date.now();
-  saveState();
-  updatePsychologyUI();
-}
-function savePsyNote() {
-  state.psychology.note = document.getElementById('psy-note')?.value || '';
-  state.psychology.updatedAt = Date.now();
-  saveState();
-  toast('Đã lưu nhật ký tâm lý.');
-}
-function updatePsychologyUI() {
-  // score from 4 habits
-  const h = state.psychology.habits || {};
-  const score = (Number(!!h.plan) + Number(!!h.stop) + Number(!!h.journal) + Number(!!h.sleep)) / 4 * 100;
-  setText('psy-score', Math.round(score));
-  setText('psy-msg', score >= 75 ? 'TỐT' : score >= 50 ? 'TRUNG LẬP' : 'CẦN SIẾT KỶ LUẬT');
-
-  // streak: count last closed W/L chain
-  const closed = state.journal.filter((t) => safeNum(t.sell) > 0);
-  const last = closed[0];
-  setText('psy-last', last ? ((safeNum(last.sell) > safeNum(last.buy)) ? 'WIN' : 'LOSS') : '—');
-
-  let streak = 0;
-  for (const t of closed) {
-    if (safeNum(t.sell) > safeNum(t.buy)) streak++;
-    else break;
-  }
-  setText('psy-streak', streak);
-
-  // tip
-  let tip = 'GIỮ KỶ LUẬT';
-  if (safeNum(state.market.distDays) >= 5) tip = 'THỊ TRƯỜNG XẤU: GIẢM GIAO DỊCH';
-  else if (score < 50) tip = 'NGHỈ 1 NGÀY + ÔN CHECKLIST';
-  else if (streak >= 3) tip = 'CẨN THẬN TỰ TIN QUÁ MỨC';
-  setText('psy-tip', tip);
-}
-
-/* ------------------------- RESET ------------------------- */
-function hardReset() {
-  if (!confirm('RESET toàn bộ dữ liệu (localStorage)?')) return;
-  localStorage.removeItem(LS.STATE);
-  state = loadState();
-  updateUI();
-  toast('Đã reset.');
-}
-
-/* ------------------------- HELPERS ------------------------ */
-function setText(id, value) {
+/* =========================
+   HELPERS
+========================= */
+function setText(id, txt){
   const el = document.getElementById(id);
-  if (el) el.innerText = String(value);
+  if(el) el.textContent = String(txt);
 }
-function escapeHtml(str) {
-  return String(str ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
+function escapeHtml(str){
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
-function escapeAttr(str) {
-  return escapeHtml(str).replaceAll('\n', ' ');
-}
+
+/* =========================
+   Expose for onclick
+========================= */
+window.switchTab = switchTab;
+window.seedDemo = seedDemo;
+window.hardReset = hardReset;
+window.rebuildAll = rebuildAll;
+
+window.updateMarket = updateMarket;
+window.setSentiment = setSentiment;
+window.saveMarketSectors = saveMarketSectors;
+window.suggestSectors = suggestSectors;
+window.applyMarketToSystem = applyMarketToSystem;
+
+window.triggerAnalysisUpload = triggerAnalysisUpload;
+window.onAnalysisPicked = onAnalysisPicked;
+window.moveSlider = moveSlider;
+window.pushAnalysisToJournal = pushAnalysisToJournal;
+window.resetAnalysis = resetAnalysis;
+
+window.calcPosition = calcPosition;
+window.pullFromLastTrade = pullFromLastTrade;
+window.pushTradeToCapital = pushTradeToCapital;
+window.copyPosition = copyPosition;
+
+window.openTradeModal = openTradeModal;
+window.closeTradeModal = closeTradeModal;
+window.attachTradeImage = attachTradeImage;
+window.onTradeImgPicked = onTradeImgPicked;
+window.saveTrade = saveTrade;
+window.editTrade = editTrade;
+window.deleteTrade = deleteTrade;
+window.closeTrade = closeTrade;
+window.reopenTrade = reopenTrade;
+window.zoomImage = zoomImage;
+window.closeZoom = closeZoom;
+window.exportJSON = exportJSON;
+
+window.openWikiModal = openWikiModal;
+window.closeWikiModal = closeWikiModal;
+window.attachWikiImage = attachWikiImage;
+window.onWikiImgPicked = onWikiImgPicked;
+window.clearWikiImage = clearWikiImage;
+window.saveWiki = saveWiki;
+window.editWiki = editWiki;
+window.deleteWiki = deleteWiki;
+window.useWikiInAnalysis = useWikiInAnalysis;
+window.zoomWiki = zoomWiki;
+
+window.openRadarModal = openRadarModal;
+window.closeRadarModal = closeRadarModal;
+window.saveRadar = saveRadar;
+window.editRadar = editRadar;
+window.deleteRadar = deleteRadar;
+window.selectRadar = selectRadar;
+window.syncRadarFromJournal = syncRadarFromJournal;
+window.sortRadar = sortRadar;
+
+window.renderSystemChecklist = renderSystemChecklist;
+
+window.saveSettings = saveSettings;
+window.triggerImport = triggerImport;
+window.onImportJSON = onImportJSON;
+window.pasteCSVSample = pasteCSVSample;
+window.importCSV = importCSV;
+window.clearCSV = clearCSV;
