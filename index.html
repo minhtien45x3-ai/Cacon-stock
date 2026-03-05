@@ -23,207 +23,65 @@
             <h1 class="text-xl font-black tracking-tighter font-mono uppercase">CACON<span class="text-emerald-400">STOCK</span></h1>
         </div>
         <nav class="flex gap-1 overflow-x-auto no-scrollbar items-center">
-            <button onclick="switchTab('intro')" id="btn-intro" class="nav-btn">GIỚI THIỆU</button>
             <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">TỔNG QUAN</button>
-            <button onclick="switchTab('portfolio')" id="btn-portfolio" class="nav-btn">DANH MỤC</button>
             <button onclick="switchTab('market')" id="btn-market" class="nav-btn">THỊ TRƯỜNG</button>
             <button onclick="switchTab('radar')" id="btn-radar" class="nav-btn">RADAR</button>
             <button onclick="switchTab('analysis')" id="btn-analysis" class="nav-btn">PHÂN TÍCH</button>
-            <button onclick="switchTab('capital')" id="btn-capital" class="nav-btn">VỐN</button>
             <button onclick="switchTab('journal')" id="btn-journal" class="nav-btn">NHẬT KÝ</button>
             <button onclick="switchTab('wiki')" id="btn-wiki" class="nav-btn">MẪU HÌNH</button>
-            <button onclick="switchTab('library')" id="btn-library" class="nav-btn text-sky-400">THƯ VIỆN</button>
             <button onclick="switchTab('anti')" id="btn-anti" class="nav-btn text-rose-400">ANTI-PORT</button>
-            <button onclick="switchTab('psychology')" id="btn-psychology" class="nav-btn text-purple-400">TÂM LÝ</button>
         </nav>
     </header>
 
     <main class="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
-        
-        <div id="tab-intro" class="tab-content hidden animate-in max-w-4xl mx-auto py-10">
-            <div class="glass-panel p-10 border-t-4 border-emerald-500 space-y-6">
-                <h2 class="text-3xl font-black text-emerald-400 tracking-tighter">CA CON STOCK: KỶ LUẬT ĐỂ TỒN TẠI</h2>
-                <p class="text-lg leading-relaxed text-slate-300 italic font-normal lowercase">
-                    Thị trường tài chính là đấu trường khốc liệt nhất thời bình... "cá con" không thể đi ngược dòng nước, mà phải học cách lướt trên những con sóng của cá mập.
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6">
-                    <div class="flex items-center gap-3 text-emerald-400"><i data-lucide="brain"></i> TƯ DUY</div>
-                    <div class="flex items-center gap-3 text-blue-400"><i data-lucide="shield"></i> QUẢN TRỊ</div>
-                    <div class="flex items-center gap-3 text-amber-400"><i data-lucide="zap"></i> THÍCH NGHI</div>
-                </div>
-            </div>
-        </div>
-
         <div id="tab-dashboard" class="tab-content space-y-8 animate-in">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="stat-card border-emerald-500/50"><p class="stat-label uppercase">Tài sản hiện tại</p><h2 class="stat-value font-mono" id="dash-balance">0đ</h2></div>
-                <div class="stat-card border-blue-500/50"><p class="stat-label uppercase">Lãi/Lỗ ròng</p><h2 class="stat-value font-mono" id="dash-pnl">0đ</h2></div>
-                <div class="stat-card border-amber-500/50"><p class="stat-label uppercase">Tỷ lệ thắng</p><h2 class="stat-value font-mono text-amber-400" id="dash-winrate">0%</h2></div>
-                <div class="stat-card border-rose-500/50"><p class="stat-label uppercase">Cổ phiếu đang giữ</p><h2 class="stat-value font-mono text-rose-400" id="dash-holding">0</h2></div>
+                <div class="stat-card border-emerald-500/50"><p class="stat-label">TÀI SẢN</p><h2 class="stat-value" id="dash-balance">0đ</h2></div>
+                <div class="stat-card border-blue-500/50"><p class="stat-label">LÃI/LỖ RÒNG</p><h2 class="stat-value" id="dash-pnl">0đ</h2></div>
+                <div class="stat-card border-amber-500/50"><p class="stat-label">TỶ LỆ THẮNG</p><h2 class="stat-value text-amber-400" id="dash-winrate">0%</h2></div>
+                <div class="stat-card border-rose-500/50"><p class="stat-label">ĐANG NẮM GIỮ</p><h2 class="stat-value text-rose-400" id="dash-holding">0</h2></div>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div class="lg:col-span-2 glass-panel p-6 h-[400px]"><canvas id="equityChart"></canvas></div>
                 <div class="glass-panel p-6 h-[400px] flex flex-col items-center">
-                    <p class="text-[10px] text-slate-500 mb-6 tracking-widest self-start">CASH VS STOCK</p>
+                    <p class="text-[10px] text-slate-500 mb-6 tracking-widest self-start">TỶ TRỌNG TIỀN/CỔ</p>
                     <div class="flex-1 w-full"><canvas id="allocationChart"></canvas></div>
-                </div>
-                <div class="lg:col-span-2 glass-panel p-6">
-                    <p class="text-[10px] text-slate-500 mb-4 tracking-widest uppercase">Hiệu suất theo tháng</p>
-                    <table class="w-full text-xs text-left"><tbody id="stats-monthly-body" class="divide-y divide-white/5"></tbody></table>
-                </div>
-                <div class="glass-panel p-6">
-                    <p class="text-[10px] text-slate-500 mb-4 tracking-widest uppercase">Hiệu suất mẫu hình</p>
-                    <div id="stats-setup-body" class="space-y-4"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-portfolio" class="tab-content hidden space-y-8 animate-in">
-            <div class="flex justify-between items-end">
-                <h2 class="text-2xl font-black font-mono">My Portfolio</h2>
-                <h3 id="port-ratio" class="text-xl font-black text-emerald-400 font-mono">100% CASH</h3>
-            </div>
-            <div class="glass-panel overflow-hidden">
-                <table class="w-full text-xs text-left">
-                    <thead class="bg-black/40 text-slate-500 font-bold uppercase">
-                        <tr><th class="p-5">MÃ CP</th><th class="p-5 text-right">KHỐI LƯỢNG</th><th class="p-5 text-right">GIÁ VỐN TB</th><th class="p-5 text-right">TỶ TRỌNG (%)</th><th class="p-5 text-center">STATUS</th></tr>
-                    </thead>
-                    <tbody id="portfolio-list" class="divide-y divide-white/5"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-market" class="tab-content hidden space-y-8 animate-in">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="glass-panel p-8 text-center border-t-4 border-emerald-500">
-                    <p class="text-[10px] text-slate-500 mb-6 tracking-widest">NGÀY PHÂN PHỐI (VNI)</p>
-                    <input type="number" id="market-dist-days" value="0" oninput="updateMarketStatus()" class="text-8xl font-black bg-transparent w-full text-center outline-none font-mono">
-                    <div id="dist-alert-box" class="mt-4 p-6 rounded-3xl text-center">
-                        <p id="dist-alert-title" class="font-black text-sm uppercase"></p>
-                        <p id="dist-alert-desc" class="text-[10px] italic mt-1 text-slate-400 lowercase font-normal"></p>
-                    </div>
-                </div>
-                <div class="glass-panel p-8 text-center flex flex-col items-center">
-                    <p class="text-[10px] text-slate-500 mb-6 self-start tracking-widest uppercase">Tâm lý thị trường</p>
-                    <div class="relative w-full aspect-[2/1] px-6">
-                        <canvas id="sentimentGauge"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-end pb-4">
-                            <span id="gauge-val" class="text-3xl font-black font-mono">50</span>
-                            <span id="gauge-label" class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">TRUNG LẬP</span>
-                        </div>
-                    </div>
-                    <select onchange="updateSentiment(this.value)" class="w-full mt-10 p-4 rounded-xl font-bold text-xs bg-black/40 border border-white/10 uppercase">
-                        <option value="10">😨 SỢ HÃI TỘT ĐỘ</option>
-                        <option value="50" selected>😐 TRUNG LẬP</option>
-                        <option value="90">🔥 THAM LAM TỘT ĐỘ</option>
-                    </select>
-                </div>
-                <div class="glass-panel p-8 flex flex-col space-y-6">
-                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">DÒNG TIỀN DẪN DẮT (LEADERS)</p>
-                    <textarea id="market-sectors" oninput="saveMarketData()" class="flex-1 bg-black/40 p-5 rounded-3xl border border-white/5 font-black uppercase text-emerald-400 text-sm outline-none leading-relaxed" placeholder="ĐÁNH THỦ CÔNG CÁC NGÀNH MẠNH TẠI ĐÂY..."></textarea>
-                </div>
-            </div>
-            <div class="glass-panel p-8">
-                <p class="text-[10px] font-bold text-slate-500 mb-6 uppercase tracking-widest flex items-center gap-2"><i data-lucide="rss" class="w-3 h-3 text-sky-400"></i> WEBSITE DỮ LIỆU MIỄN PHÍ</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-[10px] font-black">
-                    <a href="https://vietstock.vn" target="_blank" class="p-4 border border-white/5 rounded-2xl hover:bg-emerald-500/10 transition flex justify-between items-center"><span>VIETSTOCK - TIN TỨC</span> <i data-lucide="external-link" class="w-3 h-3"></i></a>
-                    <a href="https://cafef.vn" target="_blank" class="p-4 border border-white/5 rounded-2xl hover:bg-blue-500/10 transition flex justify-between items-center"><span>CAFEF - DỮ LIỆU</span> <i data-lucide="external-link" class="w-3 h-3"></i></a>
-                    <a href="https://fireant.vn" target="_blank" class="p-4 border border-white/5 rounded-2xl hover:bg-amber-500/10 transition flex justify-between items-center"><span>FIREANT - CHART</span> <i data-lucide="external-link" class="w-3 h-3"></i></a>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-radar" class="tab-content hidden space-y-12 animate-in">
-            <div class="flex justify-between items-center px-2">
-                <h2 class="text-2xl font-black tracking-tight font-mono uppercase">Radar Center</h2>
-                <button onclick="openModal('modal-radar')" class="btn-primary">THÊM MÃ RADAR</button>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="space-y-6">
-                    <div class="flex items-center gap-2 text-emerald-400 font-black text-xs tracking-widest uppercase"><i data-lucide="target" class="w-4 h-4"></i> Gần điểm mua (Pivot)</div>
-                    <div id="radar-near" class="space-y-4"></div>
-                </div>
-                <div class="space-y-6">
-                    <div class="flex items-center gap-2 text-blue-400 font-black text-xs tracking-widest uppercase"><i data-lucide="eye" class="w-4 h-4"></i> Cổ phiếu theo dõi</div>
-                    <div id="radar-watch" class="space-y-4"></div>
-                </div>
-                <div class="space-y-6">
-                    <div class="flex items-center gap-2 text-purple-400 font-black text-xs tracking-widest uppercase"><i data-lucide="trending-up" class="w-4 h-4"></i> Cổ phiếu dài hạn</div>
-                    <div id="radar-long" class="space-y-4"></div>
                 </div>
             </div>
         </div>
 
         <div id="tab-analysis" class="tab-content hidden flex gap-8 h-full animate-in">
             <div class="w-48 shrink-0 flex flex-col gap-4">
-                <p class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">HỆ THỐNG MẪU</p>
-                <div id="analysis-menu" class="space-y-2 overflow-y-auto no-scrollbar"></div>
+                <p class="text-[10px] font-bold text-slate-500 tracking-widest">HỆ THỐNG MẪU</p>
+                <div id="analysis-menu" class="space-y-2"></div>
             </div>
             <div class="flex-1 glass-panel flex flex-col relative overflow-hidden">
-                <div class="flex justify-between items-center p-4 border-b border-white/5 bg-black/20">
-                    <p class="text-[10px] font-black text-emerald-400 uppercase">LAB PHÂN TÍCH ĐỐI CHIẾU</p>
-                    <button onclick="resetAnalysis()" class="text-[9px] font-bold text-slate-500 uppercase">Làm mới</button>
-                </div>
-                <div class="flex-1 p-8 flex flex-col items-center justify-center">
-                    <div id="slider-container" class="relative w-full max-w-4xl aspect-video bg-black/40 rounded-[40px] border border-white/10 overflow-hidden group">
-                        <img id="ana-real-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
-                        <div id="slider-overlay" class="absolute inset-0 w-1/2 overflow-hidden border-r-2 border-emerald-500">
-                            <img id="ana-standard-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none filter sepia-[0.3]">
-                        </div>
-                        <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20" oninput="handleSlider(this.value)">
-                        <div id="ana-empty-hint" class="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10 bg-[#020617]/80">
-                            <button onclick="document.getElementById('ana-upload-input').click()" class="bg-blue-600 px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest">Tải ảnh thực tế so sánh</button>
-                        </div>
-                        <input type="file" id="ana-upload-input" class="hidden" onchange="previewRealChart(event)">
+                <div id="slider-container" class="relative w-full h-full bg-black/40 flex items-center justify-center">
+                    <img id="ana-real-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
+                    <div id="slider-overlay" class="absolute inset-0 w-1/2 overflow-hidden border-r-2 border-emerald-500">
+                        <img id="ana-standard-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none filter sepia-[0.3]">
                     </div>
-                    <div id="ana-checklist" class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-capital" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-8 animate-in">
-            <div class="glass-panel p-10 border-l-4 border-emerald-500 space-y-10">
-                <h3 class="flex items-center gap-3 text-xs font-black uppercase tracking-widest"><i data-lucide="wallet"></i> QUẢN TRỊ VỐN TỔNG</h3>
-                <div class="space-y-8">
-                    <div><label class="text-[9px] text-slate-500 uppercase mb-3 block text-center">TỔNG VỐN (VNĐ)</label>
-                    <input type="number" id="inp-v-total" value="2000000000" oninput="calcCap()" class="cap-input"></div>
-                    <div><label class="text-[9px] text-slate-500 uppercase mb-3 block text-center">SỐ CỔ PHIẾU DỰ ĐỊNH NẮM GIỮ (N)</label>
-                    <input type="number" id="inp-v-n" value="5" oninput="calcCap()" class="cap-input"></div>
-                    <div class="p-10 bg-emerald-500/5 rounded-[40px] text-center border border-emerald-500/20">
-                        <p class="text-[9px] text-slate-500 mb-4 uppercase">GIÁ TRỊ DỰ ĐỊNH / 1 CỔ PHIẾU:</p>
-                        <h1 class="text-4xl font-black text-emerald-400 font-mono" id="val-v-per-stock">400.000.000Đ</h1>
+                    <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20" oninput="handleSlider(this.value)">
+                    <div id="ana-empty-hint" class="absolute inset-0 flex flex-col items-center justify-center gap-6 z-10 bg-[#020617]/90">
+                        <button onclick="document.getElementById('ana-upload-input').click()" class="bg-blue-600 px-8 py-4 rounded-full text-xs font-black">TẢI BIỂU ĐỒ THỰC TẾ SO SÁNH</button>
                     </div>
-                </div>
-            </div>
-            <div class="glass-panel p-10 border-l-4 border-blue-500 bg-blue-500/5 space-y-10">
-                <h3 class="flex items-center gap-3 text-xs font-black uppercase tracking-widest"><i data-lucide="calculator"></i> TÍNH TOÁN RỦI RO (POSITION SIZE)</h3>
-                <div class="space-y-6">
-                    <div class="grid grid-cols-2 gap-6">
-                        <input type="number" id="inp-c-risk" value="2" oninput="calcCap()" class="cap-input-sm text-blue-400" placeholder="RỦI RO (%)">
-                        <input type="number" id="inp-c-buy" value="100000" oninput="calcCap()" class="cap-input-sm" placeholder="GIÁ MUA">
-                        <input type="number" id="inp-c-sl" value="93000" oninput="calcCap()" class="cap-input-sm text-rose-400 col-span-2" placeholder="GIÁ CẮT LỖ (SL)">
-                    </div>
-                    <div class="text-center pt-8 border-t border-white/5">
-                        <p class="text-[10px] text-slate-500 mb-6 uppercase tracking-[0.3em] font-black">KHỐI LƯỢNG NÊN MUA:</p>
-                        <h1 class="text-7xl font-black text-emerald-400 mb-6 font-mono" id="val-c-size">1.142 CP</h1>
-                        <p class="text-xs font-mono text-slate-400 uppercase" id="val-c-risk-sum">LỖ TỐI ĐA: 8.000.000Đ (2%)</p>
-                    </div>
+                    <input type="file" id="ana-upload-input" class="hidden" onchange="previewRealChart(event)">
                 </div>
             </div>
         </div>
 
         <div id="tab-journal" class="tab-content hidden space-y-6 animate-in">
-            <div class="flex justify-between items-center px-2">
-                <button onclick="openModal('modal-trade')" class="btn-primary">THÊM LỆNH MỚI</button>
-                <h1 class="text-4xl font-black text-emerald-500 font-mono" id="journal-pnl-sum">0đ</h1>
+            <div class="flex justify-between items-center">
+                <button onclick="openModal('modal-trade')" class="btn-primary">GHI LỆNH MỚI</button>
+                <h1 class="text-3xl font-black text-emerald-500 font-mono" id="journal-pnl-sum">0đ</h1>
             </div>
-            <div class="glass-panel overflow-hidden border border-white/5">
-                <table class="w-full text-xs text-left">
-                    <thead class="bg-black/40 text-slate-500 font-bold uppercase">
+            <div class="glass-panel overflow-hidden">
+                <table class="w-full text-[11px] text-left">
+                    <thead class="bg-black/40 text-slate-500">
                         <tr>
-                            <th class="p-5">NGÀY</th><th class="p-5">MÃ</th><th class="p-5 text-center">CHART</th>
-                            <th class="p-5">MÔ HÌNH</th><th class="p-5 text-right">KHỐI LƯỢNG</th><th class="p-5 text-right">MUA/BÁN</th>
-                            <th class="p-5 text-right font-black">PNL</th><th class="p-5 text-center">XỬ LÝ</th>
+                            <th class="p-5">NGÀY</th><th class="p-5">MÃ</th><th class="p-5">MÔ HÌNH</th>
+                            <th class="p-5 text-right">KHỐI LƯỢNG</th><th class="p-5 text-right">MUA</th><th class="p-5 text-right">BÁN</th>
+                            <th class="p-5 text-right">LÃI/LỖ</th><th class="p-5 text-center">XÓA</th>
                         </tr>
                     </thead>
                     <tbody id="journal-list" class="divide-y divide-white/5"></tbody>
@@ -231,118 +89,26 @@
             </div>
         </div>
 
-        <div id="tab-wiki" class="tab-content hidden space-y-12 animate-in">
-            <div class="flex justify-between items-center px-2">
-                <h2 class="text-xs font-black text-emerald-400 tracking-[0.4em] uppercase">Thư viện mẫu hình (Wiki)</h2>
-                <button onclick="openWikiModal()" class="btn-primary text-xs py-2 uppercase">Tạo mới</button>
-            </div>
-            <div id="wiki-grid" class="grid grid-cols-1 md:grid-cols-4 gap-8"></div>
+        <div id="tab-wiki" class="tab-content hidden space-y-8 animate-in">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="wiki-grid"></div>
         </div>
-
-        <div id="tab-library" class="tab-content hidden space-y-8 animate-in">
-            <h2 class="text-xl font-black text-sky-400 tracking-tighter uppercase">Kho tri thức CANSLIM & PTKT</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="glass-panel p-8 border-l-4 border-sky-500 space-y-4">
-                    <h4 class="text-sm font-black text-white uppercase tracking-widest">Hệ thống CANSLIM</h4>
-                    <p class="text-[11px] text-slate-400 lowercase font-normal italic leading-relaxed">C-A-N-S-L-I-M: Công thức chọn siêu cổ phiếu tăng trưởng từ William O'Neil. </p>
-                </div>
-                <div class="glass-panel p-8 border-l-4 border-sky-500 space-y-4">
-                    <h4 class="text-sm font-black text-white uppercase tracking-widest">Relative Strength (RS)</h4>
-                    <p class="text-[11px] text-slate-400 lowercase font-normal italic leading-relaxed">Tìm kiếm cổ phiếu khỏe hơn thị trường chung. RS Rating > 85 là ưu tiên hàng đầu.</p>
-                </div>
-                <div class="glass-panel p-8 border-l-4 border-sky-500 space-y-4">
-                    <h4 class="text-sm font-black text-white uppercase tracking-widest">Cách đếm ngày phân phối</h4>
-                    <p class="text-[11px] text-slate-400 lowercase font-normal italic leading-relaxed">Nhận diện rủi ro khi tổ chức thoát hàng: Chỉ số giảm > 0.2% với khối lượng cao hơn ngày trước đó.</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-psychology" class="tab-content hidden space-y-12 animate-in pb-20">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="glass-panel p-10 border-l-4 border-rose-500 space-y-4">
-                    <h4 class="text-base text-white tracking-widest uppercase">1. Chấp nhận sai lầm</h4>
-                    <p class="text-sm text-slate-300 italic lowercase font-normal leading-relaxed">Lỗ là một phần của trò chơi. Kẻ chiến thắng là kẻ mất ít nhất khi sai. Đã sai là phải cắt, không gồng.</p>
-                </div>
-                <div class="glass-panel p-10 border-l-4 border-amber-500 space-y-4">
-                    <h4 class="text-base text-white tracking-widest uppercase">2. Đừng yêu cổ phiếu</h4>
-                    <p class="text-sm text-slate-300 italic lowercase font-normal leading-relaxed">Cổ phiếu chỉ là những tờ giấy lộn nếu nó không tăng giá. Hãy yêu quy trình, đừng yêu doanh nghiệp.</p>
-                </div>
-            </div>
-            <div class="flex flex-col items-center">
-                <p class="text-blue-400 text-[10px] font-black tracking-[0.5em] mb-12 uppercase">BÀI TẬP HÍT THỞ GIẢI TỎA ÁP LỰC 4-7-8</p>
-                <div class="relative w-64 h-64 flex items-center justify-center">
-                    <div id="breath-circle" class="absolute inset-0 rounded-full border-4 border-blue-500/20 scale-100 transition-all duration-[4000ms]"></div>
-                    <div class="text-center z-10">
-                        <h1 class="text-4xl font-black mb-1" id="breath-status">READY</h1>
-                        <p class="text-6xl font-mono font-black text-blue-500" id="breath-timer">0</p>
-                    </div>
-                </div>
-                <button onclick="startBreathing()" class="mt-12 bg-blue-600 text-white font-black px-12 py-4 rounded-full active:scale-95 transition uppercase text-xs">BẮT ĐẦU</button>
-            </div>
-        </div>
-
     </main>
 
-    <div id="modal-zoom" class="fixed inset-0 bg-black/95 hidden z-[300] flex items-center justify-center p-4 cursor-zoom-out" onclick="closeModal('modal-zoom')"><img id="zoom-img" class="max-w-full max-h-full shadow-2xl rounded-lg border border-white/10"></div>
-
-    <div id="modal-trade" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-3xl p-8 space-y-6 bg-[#0f172a] shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
-            <h3 class="text-xl font-black uppercase text-emerald-400">Ghi nhật ký lệnh kỷ luật</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-4">
-                    <input type="date" id="trade-date" class="modal-input font-mono font-bold">
-                    <input type="text" id="trade-ticker" placeholder="MÃ CP" class="modal-input uppercase font-bold">
-                    <select id="trade-setup" class="modal-input font-bold text-xs"></select>
-                    <input type="number" id="trade-vol" placeholder="KHỐI LƯỢNG" class="modal-input font-mono font-bold">
-                    <input type="number" id="trade-buy" placeholder="GIÁ MUA" class="modal-input font-mono font-bold">
-                    <input type="number" id="trade-sell" placeholder="GIÁ BÁN" class="modal-input font-mono font-bold">
-                    <select id="trade-error" class="modal-input text-rose-400 font-bold text-xs">
-                        <option value="ĐÚNG KỶ LUẬT">KHÔNG CÓ LỖI (CẮT ĐÚNG)</option>
-                        <option value="FOMO">FOMO (MUA ĐUỔI GIÁ)</option>
-                        <option value="BẮT ĐÁY">BẮT ĐÁY (CHƯA CÓ TÍN HIỆU)</option>
-                    </select>
-                    <input type="file" id="trade-img" class="modal-input text-[10px]" onchange="handleFile(event)">
-                </div>
-                <div class="space-y-4 bg-emerald-500/5 p-6 rounded-2xl border border-emerald-500/10 text-[10px] text-slate-400">
-                    <p class="font-black text-emerald-400 mb-4 tracking-widest uppercase">Checklist Kỷ Luật (Tick đủ 5 ô)</p>
-                    <label class="flex gap-3 items-center uppercase"><input type="checkbox" class="trade-check"> VNI KHÔNG QUÁ 5 NGÀY PP?</label>
-                    <label class="flex gap-3 items-center uppercase"><input type="checkbox" class="trade-check"> MÃ THUỘC TOP LEADERS?</label>
-                    <label class="flex gap-3 items-center uppercase"><input type="checkbox" class="trade-check"> XUẤT HIỆN PIVOT CHUẨN?</label>
-                    <label class="flex gap-3 items-center uppercase"><input type="checkbox" class="trade-check"> CHẤP NHẬN RỦI RO 2-3%?</label>
-                    <label class="flex gap-3 items-center uppercase"><input type="checkbox" class="trade-check"> ĐÃ CÓ KẾ HOẠCH BÁN?</label>
-                </div>
+    <div id="modal-trade" class="fixed inset-0 bg-black/80 hidden z-[100] flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-xl p-10 space-y-6 bg-[#0f172a]">
+            <h3 class="text-xl font-black text-emerald-400">GHI LỆNH MỚI</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="date" id="trade-date" class="modal-input">
+                <input type="text" id="trade-ticker" placeholder="MÃ CP" class="modal-input uppercase">
+                <select id="trade-setup" class="modal-input"></select>
+                <input type="number" id="trade-vol" placeholder="KHỐI LƯỢNG" class="modal-input">
+                <input type="number" id="trade-buy" placeholder="GIÁ MUA" class="modal-input">
+                <input type="number" id="trade-sell" placeholder="GIÁ BÁN (ĐỂ TRỐNG NẾU ĐANG GIỮ)" class="modal-input">
             </div>
-            <div class="flex gap-4"><button onclick="saveTrade()" id="btn-save-trade" class="btn-primary flex-1 opacity-50 uppercase" disabled>LƯU LỆNH VÀO NHẬT KÝ</button><button onclick="closeModal('modal-trade')" class="flex-1 bg-white/5 rounded-2xl font-black uppercase text-[10px]">ĐÓNG</button></div>
-        </div>
-    </div>
-
-    <div id="modal-wiki" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-lg p-10 space-y-6 bg-[#0f172a] max-h-[90vh] overflow-y-auto">
-            <h3 id="wiki-modal-title" class="text-xl font-black uppercase text-emerald-400">Thiết lập mẫu hình chuẩn</h3>
-            <div class="space-y-4">
-                <input type="text" id="wiki-name" placeholder="TÊN MẪU HÌNH (VÍ DỤ: CỐC TAY CẦM)" class="modal-input uppercase font-bold">
-                <div class="relative h-48 bg-black/40 rounded-3xl border border-dashed border-white/20 flex flex-col items-center justify-center overflow-hidden" onclick="document.getElementById('wiki-upload').click()">
-                    <img id="wiki-preview-img" class="absolute inset-0 w-full h-full object-cover hidden">
-                    <input type="file" id="wiki-upload" class="hidden" onchange="previewWikiImg(event)">
-                    <p class="text-[10px] text-slate-500 uppercase font-black">Click để chèn ảnh chuẩn</p>
-                </div>
-                <textarea id="wiki-conditions" rows="5" class="modal-input text-xs" placeholder="Các điều kiện checklist (Mỗi dòng 1 điều kiện)..."></textarea>
+            <div class="flex gap-4">
+                <button onclick="saveTrade()" class="btn-primary flex-1">LƯU LỆNH</button>
+                <button onclick="closeModal('modal-trade')" class="flex-1 border border-white/10 rounded-2xl">HỦY</button>
             </div>
-            <div class="flex gap-4"><button id="btn-save-wiki" class="btn-primary flex-1 uppercase">LƯU MẪU HÌNH</button><button onclick="closeModal('modal-wiki')" class="flex-1 bg-white/5 rounded-xl uppercase font-black text-[10px]">HỦY</button></div>
-        </div>
-    </div>
-
-    <div id="modal-radar" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-md p-10 space-y-6 bg-[#0f172a]">
-            <h3 class="text-xl font-black uppercase text-blue-400">Thêm vào Radar</h3>
-            <div class="space-y-4">
-                <select id="radar-cat" class="modal-input uppercase font-black"><option value="near">🎯 GẦN ĐIỂM MUA</option><option value="watch">👀 CỔ PHIẾU THEO DÕI</option><option value="long">⌛ CỔ PHIẾU DÀI HẠN</option></select>
-                <input type="text" id="radar-ticker" placeholder="MÃ CP" class="modal-input uppercase font-bold">
-                <select id="radar-setup" class="modal-input font-bold text-xs"></select>
-                <input type="number" id="radar-rs" placeholder="RS RATING (0-100)" class="modal-input font-mono">
-                <input type="text" id="radar-note" placeholder="GHI CHÚ CHIẾN LƯỢC" class="modal-input uppercase font-black text-[10px]">
-            </div>
-            <div class="flex gap-4"><button onclick="saveRadar()" class="btn-primary flex-1 uppercase">Xác nhận</button><button onclick="closeModal('modal-radar')" class="flex-1 bg-white/5 rounded-xl uppercase font-black text-[10px]">Hủy</button></div>
         </div>
     </div>
 
