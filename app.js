@@ -1,18 +1,13 @@
 /* =========================
-   TRADING JOURNAL PRO v3.1 (FULL TABS)
-   - Full tab như bản cũ
-   - Liên kết dữ liệu giữa tab:
-     Journal -> Dashboard/System/Month chart
-     Wiki -> Analysis/System/Journal setup
-     Market -> Analysis ready + Capital/System tips + Radar market-fit gợi ý
-     Radar -> click -> Analysis/Journal/Capital
-   - Fix lỗi:
-     + Chart center
-     + Upload Analysis click được
-     + Buttons edit/delete/reopen hoạt động
+   TRADING JOURNAL PRO v3.2 (PRO UI)
+   - Themes (4)
+   - Full screen emphasis
+   - Analysis focus compare (bigger)
+   - Keep all features v3.1
 ========================= */
 
-const KEY = "TJ_PRO_V31_STATE";
+const KEY = "TJ_PRO_V32_STATE";
+const THEME_KEY = "TJ_PRO_THEME";
 
 const fmtVND = (n) => (Number(n || 0)).toLocaleString("vi-VN") + "đ";
 const fmtPct = (n) => (Number(n || 0)).toFixed(2) + "%";
@@ -33,16 +28,31 @@ let editingTradeId = null;
 let editingWikiId = null;
 let editingRadarId = null;
 
-/* =========================
-   BOOT
-========================= */
 window.addEventListener("DOMContentLoaded", () => {
+  applyThemeOnLoad();
   initCharts();
   ensureDemoIfEmpty();
   hydrateAll();
   switchTab("dashboard");
   rebuildAll();
 });
+
+/* =========================
+   THEME
+========================= */
+function changeTheme(themeClass){
+  document.body.className = themeClass;
+  localStorage.setItem(THEME_KEY, themeClass);
+
+  const sel = document.getElementById("themeSelect");
+  if(sel) sel.value = themeClass;
+}
+function applyThemeOnLoad(){
+  const saved = localStorage.getItem(THEME_KEY) || "theme-dark";
+  document.body.className = saved;
+  const sel = document.getElementById("themeSelect");
+  if(sel) sel.value = saved;
+}
 
 /* =========================
    STATE
@@ -64,11 +74,12 @@ function defaultState(){
     },
     analysis: {
       selectedWikiId: null,
-      realImg: null
+      realImg: null,
+      sideOpen: true
     },
     wiki: [],
     journal: [],
-    radar: [] // watchlist scoring
+    radar: []
   };
 }
 
@@ -114,45 +125,27 @@ function seedDemo(force=true){
   }
 
   state.wiki = [
-    {
-      id: uid(),
-      title: "CỐC TAY CẦM",
-      img: "",
-      checklist: [
-        "ĐÁY TRÒN (6–15 TUẦN)",
-        "TAY CẦM (1–5 TUẦN)",
-        "VOL KHÔ CẠN TRƯỚC PIVOT",
-        "BREAK PIVOT + VOL",
-        "MARKET THUẬN + RS TĂNG"
-      ],
-      createdAt: Date.now()
-    },
-    {
-      id: uid(),
-      title: "VCP",
-      img: "",
-      checklist: [
-        "CO HẸP (3–5 ĐỢT)",
-        "VOL GIẢM DẦN",
-        "BIÊN ĐỘ CHẶT",
-        "BREAKOUT CÓ VOL",
-        "CẮT LỖ NHANH"
-      ],
-      createdAt: Date.now()
-    },
-    {
-      id: uid(),
-      title: "NỀN PHẲNG",
-      img: "",
-      checklist: [
-        "TỐI THIỂU 5 TUẦN",
-        "BIÊN ĐỘ <= 15%",
-        "VOL GIẢM",
-        "PIVOT RÕ",
-        "MARKET OK"
-      ],
-      createdAt: Date.now()
-    }
+    { id: uid(), title: "CỐC TAY CẦM", img: "", checklist: [
+      "ĐÁY TRÒN (6–15 TUẦN)",
+      "TAY CẦM (1–5 TUẦN)",
+      "VOL KHÔ CẠN TRƯỚC PIVOT",
+      "BREAK PIVOT + VOL",
+      "MARKET THUẬN + RS TĂNG"
+    ], createdAt: Date.now() },
+    { id: uid(), title: "VCP", img: "", checklist: [
+      "CO HẸP (3–5 ĐỢT)",
+      "VOL GIẢM DẦN",
+      "BIÊN ĐỘ CHẶT",
+      "BREAKOUT CÓ VOL",
+      "CẮT LỖ NHANH"
+    ], createdAt: Date.now() },
+    { id: uid(), title: "NỀN PHẲNG", img: "", checklist: [
+      "TỐI THIỂU 5 TUẦN",
+      "BIÊN ĐỘ <= 15%",
+      "VOL GIẢM",
+      "PIVOT RÕ",
+      "MARKET OK"
+    ], createdAt: Date.now() }
   ];
 
   const setup1 = state.wiki[0].title;
@@ -166,7 +159,6 @@ function seedDemo(force=true){
     { id: uid(), date: "2026-02-25", ticker: "HPG", setup: setup3, vol: 1500, buy: 28300,  sell: 0,      stop: 26800,  notes: "đang nắm giữ", img: null }
   ];
 
-  // Radar demo
   state.radar = [
     { id: uid(), ticker:"FPT", setup: setup1, rs:82, vol:78, base:80, trend:75, marketfit:70, notes:"leader", createdAt:Date.now() },
     { id: uid(), ticker:"VCB", setup: setup2, rs:76, vol:66, base:72, trend:70, marketfit:65, notes:"bank mạnh", createdAt:Date.now() },
@@ -209,7 +201,7 @@ function switchTab(tab){
 function initCharts(){
   equityChart = new Chart(document.getElementById("equityChart"), {
     type: "line",
-    data: { labels: [], datasets: [{ label: "Equity", data: [], borderColor: "#10b981", fill: true, backgroundColor: "rgba(16,185,129,.08)", pointRadius: 0 }] },
+    data: { labels: [], datasets: [{ label: "Equity", data: [], borderColor: "#10b981", fill: true, backgroundColor: "rgba(16,185,129,.08)", pointRadius: 0, borderWidth: 2 }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -223,7 +215,7 @@ function initCharts(){
 
   monthChart = new Chart(document.getElementById("monthChart"), {
     type: "bar",
-    data: { labels: [], datasets: [{ label: "PNL tháng", data: [], backgroundColor: "rgba(59,130,246,.6)" }] },
+    data: { labels: [], datasets: [{ label: "PNL tháng", data: [], backgroundColor: "rgba(59,130,246,.6)", borderRadius: 10 }] },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -245,7 +237,7 @@ function initCharts(){
     type: "radar",
     data: {
       labels: ["RS","VOL","BASE","TREND","MKT-FIT"],
-      datasets: [{ label: "Score", data: [0,0,0,0,0], borderColor:"#10b981", backgroundColor:"rgba(16,185,129,.10)" }]
+      datasets: [{ label: "Score", data: [0,0,0,0,0], borderColor:"#10b981", backgroundColor:"rgba(16,185,129,.10)", borderWidth: 2 }]
     },
     options: {
       responsive:true,
@@ -266,9 +258,7 @@ function initCharts(){
 
   sysTradesChart = new Chart(document.getElementById("sysTradesChart"), {
     type:"bar",
-    data:{ labels:[], datasets:[
-      { label:"Tổng lệnh", data:[], backgroundColor:"rgba(245,158,11,.55)" }
-    ]},
+    data:{ labels:[], datasets:[{ label:"Tổng lệnh", data:[], backgroundColor:"rgba(245,158,11,.55)", borderRadius: 10 }]},
     options:{
       responsive:true,
       maintainAspectRatio:false,
@@ -317,8 +307,8 @@ function rebuildAll(){
   calculateDashboard();
   buildEquityChart();
   buildMonthChart();
-  renderSystem(); // hệ thống luôn cập nhật
-  renderRadar();  // radar cũng cập nhật
+  renderSystem();
+  renderRadar();
   renderCapitalTips();
 }
 
@@ -537,6 +527,15 @@ function selectWikiForAnalysis(id){
   renderAnalysis();
 }
 
+function toggleAnalysisSide(){
+  state.analysis.sideOpen = !state.analysis.sideOpen;
+  saveState();
+  const side = document.getElementById("analysisSide");
+  if(side){
+    side.style.display = state.analysis.sideOpen ? "" : "none";
+  }
+}
+
 function triggerAnalysisUpload(){
   document.getElementById("ana-file")?.click();
 }
@@ -555,6 +554,10 @@ function onAnalysisPicked(e){
 
 function renderAnalysis(){
   renderAnalysisMenu();
+
+  const side = document.getElementById("analysisSide");
+  if(side) side.style.display = state.analysis.sideOpen ? "" : "none";
+
   const selected = state.wiki.find(w=>w.id===state.analysis.selectedWikiId) || null;
 
   setText("ana-selected", selected ? selected.title : "—");
@@ -589,7 +592,6 @@ function renderAnalysis(){
   const hasReal = !!state.analysis.realImg;
   if(hint) hint.style.display = hasReal ? "none" : "flex";
 
-  // FIX: slider không chặn click khi chưa có ảnh
   if(slider){
     if(hasReal) slider.classList.remove("disabled");
     else slider.classList.add("disabled");
@@ -711,9 +713,8 @@ function renderCapitalTips(){
   if(sent >= 80) tips.push("Sentiment cao → dễ FOMO. Giữ kỷ luật điểm mua.");
   if(sent <= 25) tips.push("Sentiment thấp → chỉ mua leader thật sự + nền chặt.");
 
-  // gợi ý theo setup top winrate
   const top = calcSetupStats().slice(0,1)[0];
-  if(top) tips.push(`Setup hiệu quả nhất hiện tại: <b>${escapeHtml(top.setup)}</b> (Win ${top.winrate.toFixed(0)}%).`);
+  if(top) tips.push(`Setup hiệu quả nhất: <b>${escapeHtml(top.setup)}</b> (Win ${top.winrate.toFixed(0)}%).`);
 
   tips.push("Quy tắc: <b>Rủi ro/lệnh 0.5–2%</b>, cắt lỗ nhanh, không bình quân giá xuống.");
 
@@ -806,7 +807,6 @@ function saveTrade(){
 
   delete document.getElementById("tradeModal").dataset.tempImg;
 
-  // radar sync nhẹ: nếu mã chưa có radar thì auto add
   autoAddRadarFromTrade({ticker, setup});
 
   saveState();
@@ -902,7 +902,7 @@ function exportJSON(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "trading_journal_pro_v31.json";
+  a.download = "trading_journal_pro_v32.json";
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1051,12 +1051,10 @@ function zoomWiki(id){
    RADAR
 ========================= */
 function scoreRadar(r){
-  // Weighted score
   const rs = safeNum(r.rs), vol = safeNum(r.vol), base = safeNum(r.base), trend = safeNum(r.trend), mf = safeNum(r.marketfit);
   const w = { rs:.25, vol:.20, base:.25, trend:.15, mf:.15 };
   return Math.round(rs*w.rs + vol*w.vol + base*w.base + trend*w.trend + mf*w.mf);
 }
-
 function actionByScore(score){
   if(score >= 80) return "BREAKOUT";
   if(score >= 60) return "WATCH";
@@ -1089,7 +1087,6 @@ function renderRadar(){
     body.appendChild(tr);
   });
 
-  // auto select first
   if(list.length){
     if(!state.radarSelectedId || !state.radar.find(x=>x.id===state.radarSelectedId)){
       state.radarSelectedId = list[0].id;
@@ -1167,12 +1164,9 @@ function saveRadar(){
       state.radar[idx] = { ...state.radar[idx], ...data };
     }
   }else{
-    // tránh trùng ticker
     const exist = state.radar.find(x=>x.ticker===ticker);
     if(exist){
-      exist.setup = data.setup;
-      exist.rs = data.rs; exist.vol=data.vol; exist.base=data.base; exist.trend=data.trend; exist.marketfit=data.marketfit;
-      exist.notes=data.notes;
+      Object.assign(exist, data);
     }else{
       state.radar.unshift({ id: uid(), ...data, createdAt: Date.now() });
     }
@@ -1205,7 +1199,6 @@ function selectRadar(id, save=true){
   radarChart.data.datasets[0].data = [safeNum(r.rs), safeNum(r.vol), safeNum(r.base), safeNum(r.trend), safeNum(r.marketfit)];
   radarChart.update();
 
-  // đẩy sang capital (entry/stop người dùng tự nhập) -> chỉ gợi ý
   if(save){ saveState(); }
 }
 
@@ -1234,7 +1227,7 @@ function autoAddRadarFromTrade(tr){
 ========================= */
 function calcSetupStats(){
   const closed = (state.journal||[]).filter(t => safeNum(t.sell)>0 && safeNum(t.buy)>0);
-  const map = new Map(); // setup -> stats
+  const map = new Map();
 
   closed.forEach(t=>{
     const setup = t.setup || "—";
@@ -1261,7 +1254,6 @@ function calcSetupStats(){
 }
 
 function renderSystem(){
-  // setup ranking table
   const tbody = document.getElementById("sysSetupBody");
   if(tbody){
     const stats = calcSetupStats();
@@ -1279,8 +1271,7 @@ function renderSystem(){
     });
   }
 
-  // trades per month chart
-  const map = new Map(); // ym -> count
+  const map = new Map();
   (state.journal||[]).forEach(t=>{
     const ym = String(t.date||"").slice(0,7) || "NA";
     map.set(ym, (map.get(ym)||0) + 1);
@@ -1293,7 +1284,6 @@ function renderSystem(){
     sysTradesChart.update();
   }
 
-  // tips
   const tipsBox = document.getElementById("sysTips");
   if(tipsBox){
     const dist = safeNum(state.market.distDays);
@@ -1307,7 +1297,6 @@ function renderSystem(){
     tipsBox.innerHTML = msg.map(t=>`<div class="tip">${t}</div>`).join("");
   }
 
-  // setup picker + checklist
   fillSetupSelect();
   renderSystemChecklist();
 }
@@ -1336,13 +1325,13 @@ function renderSystemChecklist(){
 }
 
 /* =========================
-   SETTINGS + IMPORT CSV/JSON
+   SETTINGS + IMPORT
 ========================= */
 function applySettingsUI(){
   const marquee = document.getElementById("marqueeText");
   if(marquee){
     const t = state.settings.marquee || "";
-    marquee.textContent = t + t; // lặp để chạy mượt
+    marquee.textContent = t + t;
   }
 }
 
@@ -1378,7 +1367,6 @@ function onImportJSON(e){
   r.onload = ()=>{
     try{
       const data = JSON.parse(r.result);
-      // merge soft
       const d = defaultState();
       state = {
         ...d,
@@ -1497,12 +1485,15 @@ window.seedDemo = seedDemo;
 window.hardReset = hardReset;
 window.rebuildAll = rebuildAll;
 
+window.changeTheme = changeTheme;
+
 window.updateMarket = updateMarket;
 window.setSentiment = setSentiment;
 window.saveMarketSectors = saveMarketSectors;
 window.suggestSectors = suggestSectors;
 window.applyMarketToSystem = applyMarketToSystem;
 
+window.toggleAnalysisSide = toggleAnalysisSide;
 window.triggerAnalysisUpload = triggerAnalysisUpload;
 window.onAnalysisPicked = onAnalysisPicked;
 window.moveSlider = moveSlider;

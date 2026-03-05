@@ -3,23 +3,38 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TRADING JOURNAL PRO v3.1 (FULL TABS)</title>
+  <title>TRADING JOURNAL PRO v3.2 (PRO UI)</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body>
+<body class="theme-dark">
   <header class="topbar">
     <div class="brand">
       <div class="logo">TJ</div>
       <div>
-        <div class="title">TRADING JOURNAL <span class="accent">PRO v3.1</span></div>
-        <div class="subtitle">Full Tabs • Liên kết dữ liệu • Demo sẵn</div>
+        <div class="title">TRADING JOURNAL <span class="accent">PRO v3.2</span></div>
+        <div class="subtitle">Full Screen • Pro UI • Themes • Focus Analysis</div>
       </div>
     </div>
 
     <div class="top-actions">
+      <div class="selectWrap">
+        <span class="selectLabel">Theme</span>
+        <select id="themeSelect" class="select" onchange="changeTheme(this.value)">
+          <option value="theme-dark">Dark Navy</option>
+          <option value="theme-slate">Slate Gray</option>
+          <option value="theme-emerald">Emerald</option>
+          <option value="theme-purple">Purple</option>
+        </select>
+      </div>
+
       <button class="btn ghost" onclick="seedDemo(true)">DEMO</button>
       <button class="btn ghost danger" onclick="hardReset()">RESET</button>
     </div>
@@ -73,8 +88,9 @@
         </div>
       </div>
 
+      <!-- Emphasis: Equity to hơn -->
       <div class="grid2 mt">
-        <div class="card">
+        <div class="card xl">
           <div class="row between">
             <div>
               <div class="sectionTitle">Equity curve (từ Nhật ký)</div>
@@ -85,12 +101,12 @@
               <button class="btn chip" onclick="switchTab('journal')">Vào Nhật ký</button>
             </div>
           </div>
-          <div class="chartBox h320">
+          <div class="chartBox h460">
             <canvas id="equityChart"></canvas>
           </div>
         </div>
 
-        <div class="card">
+        <div class="card lg">
           <div class="row between">
             <div>
               <div class="sectionTitle">Hiệu suất theo tháng</div>
@@ -98,36 +114,36 @@
             </div>
             <button class="btn chip" onclick="switchTab('system')">Xem Hệ thống</button>
           </div>
-          <div class="chartBox h320">
+          <div class="chartBox h360">
             <canvas id="monthChart"></canvas>
           </div>
-        </div>
-      </div>
 
-      <div class="grid6 mt">
-        <div class="card mini">
-          <div class="label">Expectancy</div>
-          <div class="value mono" id="pro-expect">0đ</div>
-        </div>
-        <div class="card mini">
-          <div class="label">Profit Factor</div>
-          <div class="value mono" id="pro-pf">0.00</div>
-        </div>
-        <div class="card mini">
-          <div class="label">Avg win</div>
-          <div class="value mono" id="pro-avgwin">0đ</div>
-        </div>
-        <div class="card mini">
-          <div class="label">Avg loss</div>
-          <div class="value mono" id="pro-avgloss">0đ</div>
-        </div>
-        <div class="card mini">
-          <div class="label">Avg %</div>
-          <div class="value mono" id="pro-avgpct">0%</div>
-        </div>
-        <div class="card mini">
-          <div class="label">E/Trade</div>
-          <div class="value mono" id="pro-ept">0đ</div>
+          <div class="grid6 mt">
+            <div class="card mini">
+              <div class="label">Expectancy</div>
+              <div class="value mono" id="pro-expect">0đ</div>
+            </div>
+            <div class="card mini">
+              <div class="label">Profit Factor</div>
+              <div class="value mono" id="pro-pf">0.00</div>
+            </div>
+            <div class="card mini">
+              <div class="label">Avg win</div>
+              <div class="value mono" id="pro-avgwin">0đ</div>
+            </div>
+            <div class="card mini">
+              <div class="label">Avg loss</div>
+              <div class="value mono" id="pro-avgloss">0đ</div>
+            </div>
+            <div class="card mini">
+              <div class="label">Avg %</div>
+              <div class="value mono" id="pro-avgpct">0%</div>
+            </div>
+            <div class="card mini">
+              <div class="label">E/Trade</div>
+              <div class="value mono" id="pro-ept">0đ</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -150,7 +166,7 @@
 
           <div class="row gap mt">
             <button class="btn chip" onclick="applyMarketToSystem()">Áp dụng vào Hệ thống</button>
-            <button class="btn chip" onclick="switchTab('dashboard')">Về Tổng quan</button>
+            <button class="btn chip" onclick="switchTab('analysis')">Sang Phân tích</button>
           </div>
         </div>
 
@@ -158,7 +174,7 @@
           <div class="sectionTitle">Sentiment</div>
           <div class="sectionSub">Fear ↔ Neutral ↔ Greed</div>
 
-          <div class="chartBox h260">
+          <div class="chartBox h300">
             <canvas id="sentimentChart"></canvas>
           </div>
 
@@ -224,7 +240,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card lg">
           <div class="row between">
             <div>
               <div class="sectionTitle">Radar chart</div>
@@ -236,7 +252,7 @@
             </div>
           </div>
 
-          <div class="chartBox h320 mt">
+          <div class="chartBox h420 mt">
             <canvas id="radarChart"></canvas>
           </div>
 
@@ -297,7 +313,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card lg">
           <div class="row between">
             <div>
               <div class="sectionTitle">Số lệnh theo tháng</div>
@@ -306,7 +322,7 @@
             <button class="btn chip" onclick="switchTab('dashboard')">Về Dashboard</button>
           </div>
 
-          <div class="chartBox h320 mt">
+          <div class="chartBox h420 mt">
             <canvas id="sysTradesChart"></canvas>
           </div>
         </div>
@@ -336,43 +352,35 @@
       </div>
     </section>
 
-    <!-- ANALYSIS -->
+    <!-- ANALYSIS (FOCUS) -->
     <section class="tab hidden" id="tab-analysis">
-      <div class="grid2">
-        <div class="card">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Chọn mẫu hình (từ Wiki)</div>
-              <div class="sectionSub">Bấm 1 mẫu → hiện checklist + ảnh mẫu</div>
-            </div>
-            <button class="btn chip" onclick="switchTab('wiki')">Mở Wiki</button>
-          </div>
-
-          <div id="ana-menu" class="menu mt"></div>
-
-          <div class="card inset mt">
-            <div class="label">Checklist mẫu đang chọn</div>
-            <div id="ana-checklist" class="checklist mt"></div>
-          </div>
-
-          <div class="row gap mt">
-            <button class="btn chip" onclick="pushAnalysisToJournal()">Chuyển sang Nhật ký</button>
-            <button class="btn chip" onclick="resetAnalysis()">Làm mới</button>
-          </div>
+      <div class="row between">
+        <div>
+          <div class="sectionTitle">Phân tích trước khi vào lệnh</div>
+          <div class="sectionSub">So sánh mẫu vs chart thực tế (full focus). Checklist thu gọn bên phải.</div>
         </div>
 
-        <div class="card">
+        <div class="row gap">
+          <button class="btn chip" onclick="triggerAnalysisUpload()">Tải ảnh chart</button>
+          <button class="btn chip" onclick="toggleAnalysisSide()">Checklist</button>
+          <button class="btn primary" onclick="pushAnalysisToJournal()">Đẩy sang Nhật ký</button>
+        </div>
+      </div>
+
+      <!-- MAIN: compare lớn + side checklist -->
+      <div class="analysisLayout mt">
+        <div class="card analysisMain xl">
           <div class="row between">
             <div>
               <div class="sectionTitle">So sánh chart</div>
-              <div class="sectionSub">Ảnh mẫu vs ảnh thực tế (kéo slider)</div>
+              <div class="sectionSub">Kéo slider để so sánh 2 biểu đồ</div>
             </div>
             <div class="row gap">
-              <button class="btn chip" onclick="triggerAnalysisUpload()">Tải ảnh chart</button>
+              <button class="btn chip" onclick="resetAnalysis()">Xóa ảnh thực tế</button>
             </div>
           </div>
 
-          <div class="compare mt" id="compareBox">
+          <div class="compare big mt" id="compareBox">
             <img id="img-real" class="img real" alt="">
             <div id="overlay" class="overlay">
               <img id="img-template" class="img template" alt="">
@@ -380,6 +388,7 @@
 
             <input id="slider" class="slider disabled" type="range" min="0" max="100" value="50"
                    oninput="moveSlider(this.value)">
+
             <div class="emptyHint" id="ana-hint">
               <div class="hintTitle">Chưa có ảnh chart thực tế</div>
               <div class="hintSub">Bấm “Tải ảnh chart” để chọn ảnh. Sau khi có ảnh, slider sẽ kéo được.</div>
@@ -395,7 +404,7 @@
               <div class="value mono" id="ana-selected">—</div>
             </div>
             <div class="card mini">
-              <div class="label">Market status</div>
+              <div class="label">Market</div>
               <div class="value mono" id="ana-market">—</div>
             </div>
             <div class="card mini">
@@ -404,13 +413,30 @@
             </div>
           </div>
         </div>
+
+        <aside class="card analysisSide" id="analysisSide">
+          <div class="row between">
+            <div>
+              <div class="sectionTitle">Mẫu hình (Wiki)</div>
+              <div class="sectionSub">Chọn 1 mẫu để tải ảnh mẫu + checklist</div>
+            </div>
+            <button class="btn chip" onclick="switchTab('wiki')">Mở Wiki</button>
+          </div>
+
+          <div id="ana-menu" class="menu mt"></div>
+
+          <div class="card inset mt">
+            <div class="label">Checklist</div>
+            <div id="ana-checklist" class="checklist mt"></div>
+          </div>
+        </aside>
       </div>
     </section>
 
     <!-- CAPITAL -->
     <section class="tab hidden" id="tab-capital">
       <div class="grid2">
-        <div class="card">
+        <div class="card lg">
           <div class="sectionTitle">Vốn & rủi ro (Position sizing)</div>
           <div class="sectionSub">Tự tính khối lượng theo risk % / lệnh</div>
 
@@ -484,7 +510,7 @@
 
         <div class="row gap">
           <button class="btn primary" onclick="openTradeModal()">Thêm lệnh</button>
-          <button class="btn chip" onclick="switchTab('dashboard')">Tổng quan</button>
+          <button class="btn chip" onclick="switchTab('analysis')">Phân tích</button>
           <button class="btn chip" onclick="exportJSON()">Export JSON</button>
         </div>
       </div>
