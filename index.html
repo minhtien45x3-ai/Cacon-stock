@@ -1,215 +1,621 @@
 <!DOCTYPE html>
 <html lang="vi" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaCon Stock Pro - Kỷ Luật Để Tồn Tại</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CaCon Stock Pro - Kỷ Luật Để Tồn Tại</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css"/>
 </head>
+
 <body class="bg-[#020617] text-white h-screen flex flex-col overflow-hidden uppercase font-black">
-    <div class="fixed inset-0 z-[-1] opacity-30">
-        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900 blur-[120px] rounded-full"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900 blur-[120px] rounded-full"></div>
+
+  <div class="fixed inset-0 z-[-1] opacity-30">
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900 blur-[120px] rounded-full"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-900 blur-[120px] rounded-full"></div>
+  </div>
+
+  <header class="flex items-center gap-6 px-8 py-4 border-b border-white/10 bg-black/40 backdrop-blur-xl shrink-0 z-50">
+    <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="switchTab('dashboard')">
+      <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+        <i data-lucide="shield-check" class="text-black w-5 h-5"></i>
+      </div>
+      <h1 class="text-xl font-black tracking-tighter font-mono">CACON<span class="text-emerald-400">STOCK</span></h1>
     </div>
 
-    <header class="flex items-center gap-6 px-8 py-4 border-b border-white/10 bg-black/40 backdrop-blur-xl shrink-0 z-50">
-        <div class="flex items-center gap-2 cursor-pointer shrink-0" onclick="switchTab('dashboard')">
-            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)]">
-                <i data-lucide="shield-check" class="text-black w-5 h-5"></i>
-            </div>
-            <h1 class="text-xl font-black tracking-tighter font-mono">CACON<span class="text-emerald-400">STOCK</span></h1>
-        </div>
-        <nav class="flex gap-1 overflow-x-auto no-scrollbar items-center">
-            <button onclick="switchTab('intro')" id="btn-intro" class="nav-btn">GIỚI THIỆU</button>
-            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">TỔNG QUAN</button>
-            <button onclick="switchTab('market')" id="btn-market" class="nav-btn">THỊ TRƯỜNG</button>
-            <button onclick="switchTab('radar')" id="btn-radar" class="nav-btn">RADAR</button>
-            <button onclick="switchTab('analysis')" id="btn-analysis" class="nav-btn text-emerald-400">PHÂN TÍCH</button>
-            <button onclick="switchTab('capital')" id="btn-capital" class="nav-btn">VỐN</button>
-            <button onclick="switchTab('journal')" id="btn-journal" class="nav-btn">NHẬT KÝ</button>
-            <button onclick="switchTab('wiki')" id="btn-wiki" class="nav-btn">MẪU HÌNH</button>
-            <button onclick="switchTab('library')" id="btn-library" class="nav-btn text-sky-400">THƯ VIỆN</button>
-            <button onclick="switchTab('psychology')" id="btn-psychology" class="nav-btn text-purple-400">TÂM LÝ</button>
-        </nav>
-    </header>
+    <nav class="flex gap-1 overflow-x-auto no-scrollbar items-center">
+      <button onclick="switchTab('intro')" id="btn-intro" class="nav-btn">GIỚI THIỆU</button>
+      <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">TỔNG QUAN</button>
+      <button onclick="switchTab('market')" id="btn-market" class="nav-btn">THỊ TRƯỜNG</button>
+      <button onclick="switchTab('radar')" id="btn-radar" class="nav-btn">RADAR</button>
+      <button onclick="switchTab('analysis')" id="btn-analysis" class="nav-btn text-emerald-400">PHÂN TÍCH</button>
+      <button onclick="switchTab('capital')" id="btn-capital" class="nav-btn">VỐN</button>
+      <button onclick="switchTab('journal')" id="btn-journal" class="nav-btn">NHẬT KÝ</button>
+      <button onclick="switchTab('wiki')" id="btn-wiki" class="nav-btn">MẪU HÌNH</button>
+      <button onclick="switchTab('library')" id="btn-library" class="nav-btn text-sky-400">THƯ VIỆN</button>
+      <button onclick="switchTab('psychology')" id="btn-psychology" class="nav-btn text-purple-400">TÂM LÝ</button>
+    </nav>
 
-    <main class="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
-        
-        <div id="tab-intro" class="tab-content hidden animate-in max-w-4xl mx-auto py-10">
-            <div class="glass-panel p-10 border-t-4 border-emerald-500 space-y-6">
-                <h2 class="text-3xl font-black text-emerald-400">CA CON STOCK: KỶ LUẬT ĐỂ TỒN TẠI</h2>
-                <p class="text-lg leading-relaxed text-slate-300 italic font-normal lowercase">Thị trường tài chính là đấu trường khốc liệt nhất... "cá con" phải học cách lướt trên những con sóng của cá mập.</p>
-            </div>
-        </div>
+    <div class="ml-auto flex items-center gap-2">
+      <button class="btn-ghost" onclick="openModal('modal-trade'); primeTradeModal();">
+        <i data-lucide="plus" class="w-4 h-4"></i><span>THÊM LỆNH</span>
+      </button>
+      <button class="btn-ghost" onclick="seedDemo(true)">
+        <i data-lucide="sparkles" class="w-4 h-4"></i><span>DEMO</span>
+      </button>
+      <button class="btn-ghost text-rose-300" onclick="hardReset()">
+        <i data-lucide="trash-2" class="w-4 h-4"></i><span>RESET</span>
+      </button>
+    </div>
+  </header>
 
-        <div id="tab-dashboard" class="tab-content space-y-8 animate-in">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="stat-card border-emerald-500/50"><p class="stat-label">TÀI SẢN</p><h2 class="stat-value" id="dash-balance">0đ</h2></div>
-                <div class="stat-card border-blue-500/50"><p class="stat-label">PNL RÒNG</p><h2 class="stat-value" id="dash-pnl">0đ</h2></div>
-                <div class="stat-card border-amber-500/50"><p class="stat-label">WIN RATE</p><h2 class="stat-value text-amber-400" id="dash-winrate">0%</h2></div>
-                <div class="stat-card border-rose-500/50"><p class="stat-label">HOLDING</p><h2 class="stat-value text-rose-400" id="dash-holding">0</h2></div>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 glass-panel p-6 h-[400px]"><canvas id="equityChart"></canvas></div>
-                <div class="glass-panel p-6 h-[400px] flex flex-col items-center">
-                    <p class="text-[10px] text-slate-500 mb-6 tracking-widest self-start uppercase">Phân bổ danh mục</p>
-                    <div class="flex-1 w-full"><canvas id="allocationChart"></canvas></div>
-                </div>
-                <div class="lg:col-span-2 glass-panel p-6">
-                    <p class="text-[10px] text-slate-500 mb-4 tracking-widest uppercase">Hiệu suất theo tháng</p>
-                    <table class="w-full text-xs text-left"><tbody id="stats-monthly-body" class="divide-y divide-white/5"></tbody></table>
-                </div>
-                <div class="glass-panel p-6">
-                    <p class="text-[10px] text-slate-500 mb-4 tracking-widest uppercase">Xếp hạng mẫu hình</p>
-                    <div id="stats-setup-body" class="space-y-4"></div>
-                </div>
-            </div>
-        </div>
+  <main class="flex-1 overflow-y-auto p-8 custom-scrollbar relative z-10">
 
-        <div id="tab-market" class="tab-content hidden space-y-8 animate-in">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div class="glass-panel p-8 border-t-4 border-emerald-500">
-                    <p class="text-[10px] text-slate-500 mb-6 tracking-widest uppercase">Ngày phân phối (VNI)</p>
-                    <input type="number" id="market-dist-days" value="0" oninput="updateMarketStatus()" class="text-8xl font-black bg-transparent w-full outline-none font-mono text-center">
-                    <div id="dist-alert-box" class="mt-4 p-6 rounded-3xl"><p id="dist-alert-title" class="font-black text-sm uppercase"></p></div>
-                </div>
-                <div class="glass-panel p-8 flex flex-col items-center">
-                    <p class="text-[10px] text-slate-500 mb-6 tracking-widest self-start uppercase">Tâm lý thị trường</p>
-                    <div class="relative w-full aspect-[2/1] px-6">
-                        <canvas id="sentimentGauge"></canvas>
-                        <div class="absolute inset-0 flex flex-col items-center justify-end pb-4">
-                            <span id="gauge-val" class="text-3xl font-black font-mono">50</span>
-                        </div>
-                    </div>
-                    <select onchange="updateSentiment(this.value)" class="w-full mt-10 p-4 rounded-xl bg-black/40 border border-white/10 uppercase font-black text-xs">
-                        <option value="10">😨 SỢ HÃI</option><option value="50" selected>😐 TRUNG LẬP</option><option value="90">🔥 THAM LAM</option>
-                    </select>
-                </div>
-                <div class="glass-panel p-8 flex flex-col">
-                    <p class="text-[10px] text-slate-500 mb-6 tracking-widest uppercase self-start">Ngành dẫn dắt</p>
-                    <textarea id="market-sectors" class="flex-1 bg-black/40 p-4 rounded-2xl border border-white/5 text-emerald-400 outline-none uppercase font-black" placeholder="BANK, CÔNG NGHỆ..."></textarea>
-                </div>
-            </div>
+    <!-- INTRO -->
+    <div id="tab-intro" class="tab-content hidden animate-in max-w-4xl mx-auto py-10">
+      <div class="glass-panel p-10 border-t-4 border-emerald-500 space-y-6">
+        <h2 class="text-3xl font-black text-emerald-400">CA CON STOCK: KỶ LUẬT ĐỂ TỒN TẠI</h2>
+        <p class="text-lg leading-relaxed text-slate-300 italic font-normal lowercase">
+          Thị trường tài chính là đấu trường khốc liệt nhất... “cá con” sống sót bằng kỷ luật, hệ thống, quản trị rủi ro và nhật ký.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+          <div class="mini-card">
+            <p class="mini-label">MỤC TIÊU</p>
+            <p class="mini-val">HỆ THỐNG HOÁ</p>
+          </div>
+          <div class="mini-card">
+            <p class="mini-label">NGUYÊN TẮC</p>
+            <p class="mini-val">RỦI RO TRƯỚC LỢI NHUẬN</p>
+          </div>
+          <div class="mini-card">
+            <p class="mini-label">CỐT LÕI</p>
+            <p class="mini-val">NHẬT KÝ + CHECKLIST</p>
+          </div>
         </div>
-
-        <div id="tab-analysis" class="tab-content hidden flex gap-8 h-full animate-in">
-            <div class="w-48 shrink-0 flex flex-col gap-4">
-                <p class="text-[10px] font-bold text-slate-500 tracking-widest uppercase">Hệ thống mẫu</p>
-                <div id="analysis-menu" class="space-y-2 overflow-y-auto no-scrollbar"></div>
-            </div>
-            <div class="flex-1 glass-panel flex flex-col relative overflow-hidden">
-                <div class="flex justify-between items-center p-4 bg-black/20 border-b border-white/5">
-                    <div class="flex items-center gap-4">
-                        <p class="text-[10px] font-black text-emerald-400">LAB PHÂN TÍCH ĐỐI CHIẾU</p>
-                        <button onclick="transferToJournal()" id="btn-transfer" class="hidden px-4 py-1 bg-emerald-600 rounded-full text-[9px] hover:bg-emerald-500">CHUYỂN SANG NHẬT KÝ</button>
-                    </div>
-                    <button onclick="resetAnalysis()" class="text-[9px] font-bold text-slate-500 uppercase">Làm mới</button>
-                </div>
-                <div class="flex-1 p-8 flex flex-col items-center justify-center">
-                    <div id="slider-container" class="relative w-full max-w-4xl aspect-video bg-black/40 rounded-[40px] border border-white/10 overflow-hidden group">
-                        <img id="ana-real-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
-                        <div id="slider-overlay" class="absolute inset-0 w-1/2 overflow-hidden border-r-2 border-emerald-500 shadow-[10px_0_30px_rgba(16,185,129,0.3)]">
-                            <img id="ana-standard-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none filter sepia-[0.3] brightness-110">
-                        </div>
-                        <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20" oninput="handleSlider(this.value)">
-                        <div id="ana-empty-hint" class="absolute inset-0 flex flex-col items-center justify-center bg-[#020617]/90 z-10">
-                            <button onclick="document.getElementById('ana-upload-input').click()" class="bg-blue-600 px-8 py-3 rounded-full text-xs font-black uppercase">Tải ảnh Chart thực tế</button>
-                        </div>
-                        <input type="file" id="ana-upload-input" class="hidden" onchange="previewRealChart(event)">
-                    </div>
-                    <div id="ana-checklist" class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-capital" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-8 animate-in">
-            <div class="glass-panel p-10 border-l-4 border-emerald-500 space-y-10">
-                <h3 class="text-xs font-black tracking-widest uppercase">Quản trị vốn tổng</h3>
-                <div class="space-y-6">
-                    <input type="number" id="v-total" value="2000000000" oninput="calcRisk()" class="cap-input">
-                    <input type="number" id="v-n" value="5" oninput="calcRisk()" class="cap-input">
-                    <div class="p-10 bg-emerald-500/5 rounded-[40px] text-center border border-emerald-500/20">
-                        <p class="text-[9px] text-slate-500 mb-4 uppercase font-black">Vốn / 1 cổ phiếu:</p>
-                        <h1 id="v-per-stock" class="text-4xl font-black text-emerald-400 font-mono">0Đ</h1>
-                    </div>
-                </div>
-            </div>
-            <div class="glass-panel p-10 border-l-4 border-blue-500 bg-blue-500/5 space-y-10">
-                <h3 class="text-xs font-black tracking-widest uppercase">Tính toán khối lượng rủi ro</h3>
-                <div class="grid grid-cols-2 gap-6 text-center">
-                    <input type="number" id="c-risk" value="2" oninput="calcRisk()" class="cap-input-sm text-blue-400" placeholder="RỦI RO (%)">
-                    <input type="number" id="c-buy" placeholder="GIÁ MUA" oninput="calcRisk()" class="cap-input-sm">
-                    <input type="number" id="c-sl" placeholder="GIÁ CẮT LỖ" oninput="calcRisk()" class="cap-input-sm text-rose-400 col-span-2">
-                    <div class="col-span-2 pt-8 border-t border-white/5">
-                        <p class="text-[10px] text-slate-500 uppercase mb-4 tracking-widest">Khối lượng nên mua:</p>
-                        <h1 id="c-vol-res" class="text-6xl font-black text-emerald-400 font-mono">0 CP</h1>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-journal" class="tab-content hidden space-y-6 animate-in">
-            <div class="flex justify-between items-center px-2">
-                <button onclick="openModal('modal-trade')" class="btn-primary">THÊM LỆNH MỚI</button>
-                <h1 class="text-4xl font-black text-emerald-500 font-mono" id="journal-pnl-sum">0đ</h1>
-            </div>
-            <div class="glass-panel overflow-hidden border border-white/5">
-                <table class="w-full text-xs text-left">
-                    <thead class="bg-black/40 text-slate-500 font-bold uppercase">
-                        <tr><th class="p-5">NGÀY</th><th class="p-5">MÃ</th><th class="p-5 text-center">CHART</th><th class="p-5">MÔ HÌNH</th><th class="p-5 text-right">KHỐI LƯỢNG</th><th class="p-5 text-right">MUA/BÁN</th><th class="p-5 text-right font-black">PNL</th><th class="p-5 text-center">XỬ LÝ</th></tr>
-                    </thead>
-                    <tbody id="journal-list" class="divide-y divide-white/5"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-wiki" class="tab-content hidden space-y-12 animate-in">
-            <div class="flex justify-between items-center"><h2 class="text-xs font-black text-emerald-400 tracking-[0.4em] uppercase">Thư viện mẫu hình chuẩn</h2><button onclick="openWikiModal()" class="btn-primary text-xs py-2">TẠO MỚI</button></div>
-            <div id="wiki-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
-        </div>
-
-        <div id="tab-library" class="tab-content hidden space-y-8 animate-in">
-            <h2 class="text-xl font-black text-sky-400 tracking-tighter uppercase">Kho tri thức CANSLIM</h2>
-            <div id="library-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
-        </div>
-    </main>
-
-    <div id="modal-trade" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-3xl p-8 space-y-6 bg-[#0f172a] shadow-2xl max-h-[95vh] overflow-y-auto">
-            <h3 class="text-xl font-black uppercase text-emerald-400">Ghi nhật ký lệnh kỷ luật</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                <div class="space-y-4">
-                    <p class="text-[9px] font-black text-slate-500 uppercase border-b border-white/5 pb-2">1. Thông số giao dịch</p>
-                    <div class="grid grid-cols-2 gap-4 uppercase font-bold">
-                        <div class="col-span-2"><label class="text-[9px] text-slate-500 mb-1 block uppercase">Ngày (Lịch)</label><input type="date" id="trade-date" class="modal-input font-mono"></div>
-                        <input type="text" id="trade-ticker" placeholder="MÃ CP" class="modal-input uppercase">
-                        <select id="trade-setup" class="modal-input font-bold text-xs"></select>
-                        <input type="number" id="trade-vol" placeholder="KHỐI LƯỢNG" class="modal-input font-mono">
-                        <input type="number" id="trade-buy" placeholder="GIÁ MUA" class="modal-input font-mono">
-                        <input type="number" id="trade-sell" placeholder="GIÁ BÁN (NẾU CÓ)" class="modal-input font-mono col-span-2">
-                        <div class="p-3 bg-black/40 rounded-xl border border-white/5 text-[9px] text-slate-500 col-span-2">
-                            TRẠNG THÁI ẢNH: <span id="trade-img-status" class="text-emerald-400 uppercase">CHƯA CÓ</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="space-y-4 bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/10 text-[10px] text-slate-400 uppercase">
-                    <p class="font-black text-emerald-400 mb-4 flex items-center gap-2 uppercase"><i data-lucide="shield-check" class="w-3 h-3"></i> Checklist Kỷ Luật (TICK ĐỦ 5 Ô)</p>
-                    <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> THỊ TRƯỜNG CHUNG (VNI) THUẬN LỢI?</label>
-                    <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> THUỘC NHÓM NGÀNH DẪN DẮT (LEADER)?</label>
-                    <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> XUẤT HIỆN ĐIỂM MUA PIVOT CHUẨN?</label>
-                    <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> ĐÃ XÁC ĐỊNH ĐIỂM SL VÀ RỦI RO?</label>
-                    <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> CAM KẾT TUÂN THỦ KẾ HOẠCH BÁN?</label>
-                </div>
-            </div>
-            <div class="flex gap-4 pt-4"><button onclick="saveTrade()" id="btn-save-trade" class="btn-primary flex-1 py-4 uppercase opacity-50 font-black" disabled>Xác nhận lưu lệnh</button><button onclick="closeModal('modal-trade')" class="flex-1 bg-white/5 rounded-2xl font-black uppercase text-[10px]">Đóng</button></div>
-        </div>
+      </div>
     </div>
 
-    <div id="modal-zoom" class="fixed inset-0 bg-black/95 hidden z-[300] flex items-center justify-center p-4 cursor-zoom-out" onclick="closeModal('modal-zoom')"><img id="zoom-img" class="max-w-full max-h-full shadow-2xl rounded-lg"></div>
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content space-y-8 animate-in">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="stat-card border-emerald-500/50">
+          <p class="stat-label">TÀI SẢN</p>
+          <h2 class="stat-value" id="dash-balance">0đ</h2>
+          <p class="tiny-muted mt-2" id="dash-sub-capital">VỐN GỐC: 0Đ</p>
+        </div>
+        <div class="stat-card border-blue-500/50">
+          <p class="stat-label">PNL RÒNG</p>
+          <h2 class="stat-value" id="dash-pnl">0đ</h2>
+          <p class="tiny-muted mt-2" id="dash-sub-closed">LỆNH ĐÓNG: 0</p>
+        </div>
+        <div class="stat-card border-amber-500/50">
+          <p class="stat-label">WIN RATE</p>
+          <h2 class="stat-value text-amber-400" id="dash-winrate">0%</h2>
+          <p class="tiny-muted mt-2" id="dash-sub-avg">AVG R: 0.00R</p>
+        </div>
+        <div class="stat-card border-rose-500/50">
+          <p class="stat-label">HOLDING</p>
+          <h2 class="stat-value text-rose-400" id="dash-holding">0</h2>
+          <p class="tiny-muted mt-2" id="dash-sub-market">MARKET: TRUNG LẬP</p>
+        </div>
+      </div>
 
-    <script src="app.js"></script>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 glass-panel p-6 h-[400px]">
+          <div class="flex items-center justify-between mb-3">
+            <p class="tiny-muted tracking-widest uppercase">Equity curve (từ nhật ký)</p>
+            <div class="flex gap-2">
+              <button class="btn-chip" onclick="rebuildCharts()">REFRESH</button>
+              <button class="btn-chip" onclick="switchTab('journal')">XEM NHẬT KÝ</button>
+            </div>
+          </div>
+          <canvas id="equityChart"></canvas>
+        </div>
+
+        <div class="glass-panel p-6 h-[400px] flex flex-col items-center">
+          <div class="w-full flex items-center justify-between">
+            <p class="tiny-muted tracking-widest uppercase">Phân bổ danh mục</p>
+            <button class="btn-chip" onclick="switchTab('radar')">RADAR</button>
+          </div>
+          <div class="flex-1 w-full pt-4">
+            <canvas id="allocationChart"></canvas>
+          </div>
+          <div class="w-full grid grid-cols-2 gap-3 mt-4">
+            <div class="mini-card">
+              <p class="mini-label">TIỀN MẶT</p>
+              <p class="mini-val" id="dash-cash">0Đ</p>
+            </div>
+            <div class="mini-card">
+              <p class="mini-label">CP (GIÁ VỐN)</p>
+              <p class="mini-val" id="dash-stock">0Đ</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 glass-panel p-6">
+          <div class="flex items-center justify-between mb-2">
+            <p class="tiny-muted tracking-widest uppercase">Hiệu suất theo tháng</p>
+            <button class="btn-chip" onclick="switchTab('journal')">THÊM LỆNH</button>
+          </div>
+          <table class="w-full text-xs text-left">
+            <tbody id="stats-monthly-body" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+
+        <div class="glass-panel p-6">
+          <div class="flex items-center justify-between mb-2">
+            <p class="tiny-muted tracking-widest uppercase">Xếp hạng mẫu hình</p>
+            <button class="btn-chip" onclick="switchTab('wiki')">MẪU HÌNH</button>
+          </div>
+          <div id="stats-setup-body" class="space-y-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKET -->
+    <div id="tab-market" class="tab-content hidden space-y-8 animate-in">
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div class="glass-panel p-8 border-t-4 border-emerald-500">
+          <p class="tiny-muted tracking-widest uppercase mb-4">Ngày phân phối (VNI)</p>
+          <input type="number" id="market-dist-days" value="2" oninput="updateMarketStatus(true)"
+                 class="text-8xl font-black bg-transparent w-full outline-none font-mono text-center">
+          <div id="dist-alert-box" class="mt-4 p-6 rounded-3xl">
+            <p id="dist-alert-title" class="font-black text-sm uppercase"></p>
+            <p id="dist-alert-desc" class="text-[10px] text-slate-400 mt-2 font-bold"></p>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button class="btn-chip" onclick="pushMarketToJournal()">ÁP DỤNG VÀO CHECKLIST</button>
+            <button class="btn-chip" onclick="switchTab('dashboard')">XEM TỔNG QUAN</button>
+          </div>
+        </div>
+
+        <div class="glass-panel p-8 flex flex-col items-center">
+          <p class="tiny-muted tracking-widest uppercase mb-6 self-start">Tâm lý thị trường</p>
+          <div class="relative w-full aspect-[2/1] px-6">
+            <canvas id="sentimentGauge"></canvas>
+            <div class="absolute inset-0 flex flex-col items-center justify-end pb-4">
+              <span id="gauge-val" class="text-3xl font-black font-mono">50</span>
+              <span id="gauge-label" class="text-[10px] text-slate-400 font-bold mt-1">TRUNG LẬP</span>
+            </div>
+          </div>
+
+          <select onchange="updateSentiment(this.value, true)"
+                  class="w-full mt-10 p-4 rounded-xl bg-black/40 border border-white/10 uppercase font-black text-xs">
+            <option value="10">😨 SỢ HÃI</option>
+            <option value="50" selected>😐 TRUNG LẬP</option>
+            <option value="90">🔥 THAM LAM</option>
+          </select>
+
+          <div class="mt-4 w-full grid grid-cols-2 gap-3">
+            <button class="btn-chip" onclick="switchTab('analysis')">PHÂN TÍCH</button>
+            <button class="btn-chip" onclick="openModal('modal-trade'); primeTradeModal();">TẠO LỆNH</button>
+          </div>
+        </div>
+
+        <div class="glass-panel p-8 flex flex-col">
+          <p class="tiny-muted tracking-widest uppercase mb-6 self-start">Ngành dẫn dắt</p>
+          <textarea id="market-sectors"
+                    oninput="saveMarketSectors()"
+                    class="flex-1 bg-black/40 p-4 rounded-2xl border border-white/5 text-emerald-400 outline-none uppercase font-black"
+                    placeholder="BANK, CÔNG NGHỆ, CHỨNG KHOÁN..."></textarea>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button class="btn-chip" onclick="suggestLeaders()">GỢI Ý</button>
+            <button class="btn-chip" onclick="switchTab('radar')">SANG RADAR</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RADAR -->
+    <div id="tab-radar" class="tab-content hidden space-y-8 animate-in">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="glass-panel p-6">
+          <div class="flex items-center justify-between">
+            <p class="tiny-muted tracking-widest uppercase">Thêm mã vào radar</p>
+            <button class="btn-chip" onclick="autoImportFromJournal()">IMPORT TỪ NHẬT KÝ</button>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mt-4">
+            <input id="radar-ticker" class="modal-input uppercase font-black" placeholder="MÃ (VD: FPT)">
+            <input id="radar-price" type="number" class="modal-input font-mono" placeholder="GIÁ HIỆN TẠI">
+            <input id="radar-pivot" type="number" class="modal-input font-mono" placeholder="PIVOT">
+            <select id="radar-setup" class="modal-input font-black text-xs"></select>
+            <input id="radar-score" type="number" class="modal-input font-mono col-span-2" placeholder="SCORE (0-100)">
+            <button class="btn-primary col-span-2 py-4" onclick="addRadar()">THÊM VÀO RADAR</button>
+          </div>
+
+          <div class="mt-6 p-4 rounded-2xl bg-black/30 border border-white/5">
+            <p class="tiny-muted tracking-widest uppercase">Quick actions</p>
+            <div class="grid grid-cols-2 gap-3 mt-3">
+              <button class="btn-chip" onclick="switchTab('analysis')">PHÂN TÍCH</button>
+              <button class="btn-chip" onclick="switchTab('journal')">NHẬT KÝ</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 glass-panel p-6">
+          <div class="flex items-center justify-between">
+            <p class="tiny-muted tracking-widest uppercase">Danh sách radar (minh hoạ + dữ liệu thật)</p>
+            <div class="flex gap-2">
+              <button class="btn-chip" onclick="sortRadar('score')">SORT SCORE</button>
+              <button class="btn-chip" onclick="sortRadar('nearPivot')">GẦN PIVOT</button>
+            </div>
+          </div>
+          <div class="mt-4 overflow-hidden rounded-2xl border border-white/5">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-black/40 text-slate-500 font-bold uppercase">
+                <tr>
+                  <th class="p-4">MÃ</th>
+                  <th class="p-4">MÔ HÌNH</th>
+                  <th class="p-4 text-right">GIÁ</th>
+                  <th class="p-4 text-right">PIVOT</th>
+                  <th class="p-4 text-right">% TỚI PIVOT</th>
+                  <th class="p-4 text-center">SCORE</th>
+                  <th class="p-4 text-center">HÀNH ĐỘNG</th>
+                </tr>
+              </thead>
+              <tbody id="radar-body" class="divide-y divide-white/5"></tbody>
+            </table>
+          </div>
+          <div class="grid grid-cols-3 gap-4 mt-4">
+            <div class="mini-card">
+              <p class="mini-label">SỐ MÃ</p>
+              <p class="mini-val" id="radar-count">0</p>
+            </div>
+            <div class="mini-card">
+              <p class="mini-label">BREAKOUT SẮP XẢY RA</p>
+              <p class="mini-val" id="radar-near">0</p>
+            </div>
+            <div class="mini-card">
+              <p class="mini-label">TOP SCORE</p>
+              <p class="mini-val" id="radar-top">0</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYSIS -->
+    <div id="tab-analysis" class="tab-content hidden flex gap-8 h-full animate-in">
+      <div class="w-56 shrink-0 flex flex-col gap-4">
+        <p class="tiny-muted tracking-widest uppercase">Hệ thống mẫu (từ Wiki)</p>
+        <div id="analysis-menu" class="space-y-2 overflow-y-auto no-scrollbar"></div>
+
+        <div class="glass-panel p-4 mt-2">
+          <p class="tiny-muted tracking-widest uppercase">Liên kết nhanh</p>
+          <div class="grid grid-cols-2 gap-2 mt-3">
+            <button class="btn-chip" onclick="switchTab('wiki')">WIKI</button>
+            <button class="btn-chip" onclick="switchTab('journal')">NHẬT KÝ</button>
+            <button class="btn-chip" onclick="openModal('modal-trade'); primeTradeModal();">TẠO LỆNH</button>
+            <button class="btn-chip" onclick="switchTab('capital')">TÍNH VỐN</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex-1 glass-panel flex flex-col relative overflow-hidden">
+        <div class="flex justify-between items-center p-4 bg-black/20 border-b border-white/5">
+          <div class="flex items-center gap-4">
+            <p class="text-[10px] font-black text-emerald-400">LAB PHÂN TÍCH ĐỐI CHIẾU</p>
+            <button onclick="transferToJournal()" id="btn-transfer" class="hidden px-4 py-1 bg-emerald-600 rounded-full text-[9px] hover:bg-emerald-500">
+              CHUYỂN SANG NHẬT KÝ
+            </button>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="resetAnalysis()" class="btn-chip">LÀM MỚI</button>
+            <button onclick="switchTab('wiki')" class="btn-chip">MỞ WIKI</button>
+          </div>
+        </div>
+
+        <div class="flex-1 p-8 flex flex-col items-center justify-center">
+          <div id="slider-container" class="relative w-full max-w-4xl aspect-video bg-black/40 rounded-[40px] border border-white/10 overflow-hidden group">
+            <img id="ana-real-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none">
+            <div id="slider-overlay" class="absolute inset-0 w-1/2 overflow-hidden border-r-2 border-emerald-500 shadow-[10px_0_30px_rgba(16,185,129,0.3)]">
+              <img id="ana-standard-img" class="absolute inset-0 w-full h-full object-contain pointer-events-none filter sepia-[0.3] brightness-110">
+            </div>
+
+            <input type="range" min="0" max="100" value="50" class="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-20"
+                   oninput="handleSlider(this.value)">
+
+            <div id="ana-empty-hint" class="absolute inset-0 flex flex-col items-center justify-center bg-[#020617]/90 z-10">
+              <button onclick="document.getElementById('ana-upload-input').click()"
+                      class="bg-blue-600 px-8 py-3 rounded-full text-xs font-black uppercase">
+                Tải ảnh chart thực tế
+              </button>
+              <p class="tiny-muted mt-4 max-w-md text-center">
+                Chọn mẫu hình bên trái → checklist hiện ra. Upload ảnh thực tế → bấm “CHUYỂN SANG NHẬT KÝ”.
+              </p>
+            </div>
+            <input type="file" id="ana-upload-input" class="hidden" accept="image/*" onchange="previewRealChart(event)">
+          </div>
+
+          <div class="mt-6 w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="mini-card">
+              <p class="mini-label">MẪU ĐANG CHỌN</p>
+              <p class="mini-val" id="ana-selected">—</p>
+            </div>
+            <div class="mini-card">
+              <p class="mini-label">MARKET FILTER</p>
+              <p class="mini-val" id="ana-market">—</p>
+            </div>
+            <div class="mini-card">
+              <p class="mini-label">SẴN SÀNG TẠO LỆNH</p>
+              <p class="mini-val" id="ana-ready">NO</p>
+            </div>
+          </div>
+
+          <div id="ana-checklist" class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-4xl"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAPITAL -->
+    <div id="tab-capital" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-8 animate-in">
+      <div class="glass-panel p-10 border-l-4 border-emerald-500 space-y-10">
+        <h3 class="text-xs font-black tracking-widest uppercase">Quản trị vốn tổng</h3>
+        <div class="space-y-6">
+          <input type="number" id="v-total" value="2000000000" oninput="calcRisk()" class="cap-input">
+          <input type="number" id="v-n" value="5" oninput="calcRisk()" class="cap-input">
+          <div class="p-10 bg-emerald-500/5 rounded-[40px] text-center border border-emerald-500/20">
+            <p class="text-[9px] text-slate-500 mb-4 uppercase font-black">Vốn / 1 cổ phiếu:</p>
+            <h1 id="v-per-stock" class="text-4xl font-black text-emerald-400 font-mono">0Đ</h1>
+            <p class="tiny-muted mt-3" id="cap-hint">GỢI Ý: LẤY GIÁ MUA/SL TỪ NHẬT KÝ</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-panel p-10 border-l-4 border-blue-500 bg-blue-500/5 space-y-10">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-black tracking-widest uppercase">Tính toán khối lượng rủi ro</h3>
+          <button class="btn-chip" onclick="pullFromLastTrade()">LẤY TỪ LỆNH GẦN NHẤT</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6 text-center">
+          <input type="number" id="c-risk" value="2" oninput="calcRisk()" class="cap-input-sm text-blue-400" placeholder="RỦI RO (%)">
+          <input type="number" id="c-buy" placeholder="GIÁ MUA" oninput="calcRisk()" class="cap-input-sm">
+          <input type="number" id="c-sl" placeholder="GIÁ CẮT LỖ" oninput="calcRisk()" class="cap-input-sm text-rose-400 col-span-2">
+
+          <div class="col-span-2 pt-8 border-t border-white/5">
+            <p class="text-[10px] text-slate-500 uppercase mb-4 tracking-widest">Khối lượng nên mua:</p>
+            <h1 id="c-vol-res" class="text-6xl font-black text-emerald-400 font-mono">0 CP</h1>
+            <p class="tiny-muted mt-3" id="cap-risk-amt">RỦI RO TIỀN: 0Đ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOURNAL -->
+    <div id="tab-journal" class="tab-content hidden space-y-6 animate-in">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
+        <div class="flex gap-2">
+          <button onclick="openModal('modal-trade'); primeTradeModal();" class="btn-primary">THÊM LỆNH MỚI</button>
+          <button onclick="switchTab('dashboard')" class="btn-ghost">TỔNG QUAN</button>
+          <button onclick="exportJournal()" class="btn-ghost">EXPORT JSON</button>
+        </div>
+        <div class="text-right">
+          <h1 class="text-4xl font-black text-emerald-500 font-mono" id="journal-pnl-sum">0đ</h1>
+          <p class="tiny-muted" id="journal-sub">TÍNH TỪ LỆNH ĐÓNG</p>
+        </div>
+      </div>
+
+      <div class="glass-panel overflow-hidden border border-white/5">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-black/40 text-slate-500 font-bold uppercase">
+            <tr>
+              <th class="p-5">NGÀY</th>
+              <th class="p-5">MÃ</th>
+              <th class="p-5 text-center">CHART</th>
+              <th class="p-5">MÔ HÌNH</th>
+              <th class="p-5 text-right">KHỐI LƯỢNG</th>
+              <th class="p-5 text-right">MUA/BÁN</th>
+              <th class="p-5 text-right font-black">PNL</th>
+              <th class="p-5 text-center">XỬ LÝ</th>
+            </tr>
+          </thead>
+          <tbody id="journal-list" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="mini-card">
+          <p class="mini-label">LỆNH</p>
+          <p class="mini-val" id="j-count">0</p>
+        </div>
+        <div class="mini-card">
+          <p class="mini-label">ĐÓNG</p>
+          <p class="mini-val" id="j-closed">0</p>
+        </div>
+        <div class="mini-card">
+          <p class="mini-label">MỞ</p>
+          <p class="mini-val" id="j-open">0</p>
+        </div>
+        <div class="mini-card">
+          <p class="mini-label">AVG % LỜI/LỖ</p>
+          <p class="mini-val" id="j-avg">0%</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- WIKI -->
+    <div id="tab-wiki" class="tab-content hidden space-y-12 animate-in">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xs font-black text-emerald-400 tracking-[0.4em] uppercase">Thư viện mẫu hình chuẩn</h2>
+        <div class="flex gap-2">
+          <button onclick="openModal('modal-wiki')" class="btn-primary text-xs py-2">TẠO MỚI</button>
+          <button onclick="switchTab('analysis')" class="btn-ghost">SANG PHÂN TÍCH</button>
+        </div>
+      </div>
+      <div id="wiki-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div id="tab-library" class="tab-content hidden space-y-8 animate-in">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-black text-sky-400 tracking-tighter uppercase">Kho tri thức CANSLIM</h2>
+        <button class="btn-chip" onclick="addLibraryNote()">THÊM GHI CHÚ</button>
+      </div>
+      <div id="library-grid" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+    </div>
+
+    <!-- PSYCHOLOGY -->
+    <div id="tab-psychology" class="tab-content hidden space-y-8 animate-in">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="glass-panel p-6">
+          <p class="tiny-muted tracking-widest uppercase">Điểm kỷ luật hôm nay</p>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button class="btn-chip" onclick="toggleHabit('plan')">CÓ KẾ HOẠCH</button>
+            <button class="btn-chip" onclick="toggleHabit('stop')">TUÂN THỦ STOP</button>
+            <button class="btn-chip" onclick="toggleHabit('journal')">GHI NHẬT KÝ</button>
+            <button class="btn-chip" onclick="toggleHabit('sleep')">NGỦ ĐỦ</button>
+          </div>
+          <div class="mt-6 p-6 rounded-3xl bg-black/30 border border-white/5 text-center">
+            <p class="tiny-muted tracking-widest uppercase">SCORE</p>
+            <p class="text-6xl font-black font-mono text-purple-300" id="psy-score">50</p>
+            <p class="tiny-muted" id="psy-msg">TRUNG LẬP</p>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button class="btn-chip" onclick="switchTab('journal')">VÀO NHẬT KÝ</button>
+            <button class="btn-chip" onclick="switchTab('market')">XEM THỊ TRƯỜNG</button>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 glass-panel p-6">
+          <div class="flex items-center justify-between">
+            <p class="tiny-muted tracking-widest uppercase">Nhật ký tâm lý (minh hoạ)</p>
+            <button class="btn-chip" onclick="savePsyNote()">LƯU</button>
+          </div>
+          <textarea id="psy-note" class="w-full mt-4 bg-black/40 p-4 rounded-2xl border border-white/5 outline-none text-slate-200 font-bold"
+                    rows="8"
+                    placeholder="Ghi lại: cảm xúc trước lệnh, sau lệnh, sai lầm, bài học..."></textarea>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div class="mini-card">
+              <p class="mini-label">LỆNH LIÊN TIẾP</p>
+              <p class="mini-val" id="psy-streak">0</p>
+            </div>
+            <div class="mini-card">
+              <p class="mini-label">W/L GẦN NHẤT</p>
+              <p class="mini-val" id="psy-last">—</p>
+            </div>
+            <div class="mini-card">
+              <p class="mini-label">KHUYẾN NGHỊ</p>
+              <p class="mini-val" id="psy-tip">—</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: TRADE -->
+  <div id="modal-trade" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-3xl p-8 space-y-6 bg-[#0f172a] shadow-2xl max-h-[95vh] overflow-y-auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black uppercase text-emerald-400">Ghi nhật ký lệnh kỷ luật</h3>
+        <button class="btn-chip" onclick="closeModal('modal-trade')">ĐÓNG</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+        <div class="space-y-4">
+          <p class="text-[9px] font-black text-slate-500 uppercase border-b border-white/5 pb-2">1. Thông số giao dịch</p>
+
+          <div class="grid grid-cols-2 gap-4 uppercase font-bold">
+            <div class="col-span-2">
+              <label class="text-[9px] text-slate-500 mb-1 block uppercase">Ngày (Lịch)</label>
+              <input type="date" id="trade-date" class="modal-input font-mono">
+            </div>
+
+            <input type="text" id="trade-ticker" placeholder="MÃ CP" class="modal-input uppercase">
+            <select id="trade-setup" class="modal-input font-bold text-xs"></select>
+
+            <input type="number" id="trade-vol" placeholder="KHỐI LƯỢNG" class="modal-input font-mono">
+            <input type="number" id="trade-buy" placeholder="GIÁ MUA" class="modal-input font-mono">
+            <input type="number" id="trade-sell" placeholder="GIÁ BÁN (NẾU CÓ)" class="modal-input font-mono col-span-2">
+
+            <div class="col-span-2 grid grid-cols-2 gap-4">
+              <input type="number" id="trade-sl" placeholder="STOP LOSS (GIÁ)" class="modal-input font-mono text-rose-300">
+              <input type="number" id="trade-riskpct" placeholder="RỦI RO (%)" class="modal-input font-mono text-blue-300">
+            </div>
+
+            <div class="col-span-2 grid grid-cols-2 gap-4">
+              <button class="btn-chip" onclick="pushTradeToCapital()">ĐẨY GIÁ MUA/SL SANG TAB VỐN</button>
+              <button class="btn-chip" onclick="attachTradeImage()">ĐÍNH ẢNH CHART</button>
+            </div>
+
+            <input type="file" id="trade-img" class="hidden" accept="image/*" onchange="onTradeImgPicked(event)">
+
+            <div class="p-3 bg-black/40 rounded-xl border border-white/5 text-[9px] text-slate-500 col-span-2">
+              TRẠNG THÁI ẢNH:
+              <span id="trade-img-status" class="text-emerald-400 uppercase">CHƯA CÓ</span>
+            </div>
+
+            <div class="p-3 bg-black/40 rounded-xl border border-white/5 text-[9px] text-slate-500 col-span-2">
+              MARKET FILTER:
+              <span id="trade-market-status" class="text-amber-300 uppercase">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4 bg-emerald-500/5 p-5 rounded-2xl border border-emerald-500/10 text-[10px] text-slate-400 uppercase">
+          <p class="font-black text-emerald-400 mb-4 flex items-center gap-2 uppercase">
+            <i data-lucide="shield-check" class="w-3 h-3"></i> Checklist Kỷ Luật (TICK ĐỦ 5 Ô)
+          </p>
+          <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> THỊ TRƯỜNG CHUNG (VNI) THUẬN LỢI?</label>
+          <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> THUỘC NHÓM NGÀNH DẪN DẮT (LEADER)?</label>
+          <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> XUẤT HIỆN ĐIỂM MUA PIVOT CHUẨN?</label>
+          <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> ĐÃ XÁC ĐỊNH ĐIỂM SL VÀ RỦI RO?</label>
+          <label class="flex gap-3 items-start"><input type="checkbox" class="trade-check mt-1"> CAM KẾT TUÂN THỦ KẾ HOẠCH BÁN?</label>
+
+          <div class="mt-4 p-4 rounded-2xl bg-black/30 border border-white/5">
+            <p class="tiny-muted tracking-widest uppercase">Gợi ý</p>
+            <p class="text-[10px] text-slate-300 font-bold mt-2" id="trade-tip">
+              Tick đủ 5 ô → nút lưu sẽ sáng. Market tab sẽ tác động “Market Filter”.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-4 pt-4">
+        <button onclick="saveTrade()" id="btn-save-trade" class="btn-primary flex-1 py-4 uppercase opacity-50 font-black" disabled>
+          XÁC NHẬN LƯU LỆNH
+        </button>
+        <button onclick="closeModal('modal-trade')" class="flex-1 bg-white/5 rounded-2xl font-black uppercase text-[10px]">
+          ĐÓNG
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WIKI -->
+  <div id="modal-wiki" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[120] flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-2xl p-8 space-y-6 bg-[#0f172a] shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black uppercase text-emerald-400">Tạo mẫu hình (Wiki)</h3>
+        <button class="btn-chip" onclick="closeModal('modal-wiki')">ĐÓNG</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input id="wiki-title" class="modal-input font-black uppercase" placeholder="TÊN MẪU (VD: VCP, CỐC TAY CẦM)">
+        <input id="wiki-img" class="modal-input font-bold" placeholder="LINK ẢNH CHUẨN (IMGUR/URL)">
+        <textarea id="wiki-checklist" class="modal-input font-bold md:col-span-2" rows="5"
+                  placeholder="CHECKLIST (MỖI DÒNG 1 Ý)\nVD:\nĐÁY TRÒN\nTAY CẦM THẮT CHẶT\nPIVOT VOL LỚN"></textarea>
+      </div>
+
+      <div class="flex gap-3">
+        <button class="btn-primary flex-1 py-4" onclick="saveWiki()">LƯU MẪU HÌNH</button>
+        <button class="btn-ghost flex-1" onclick="closeModal('modal-wiki')">HUỶ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ZOOM -->
+  <div id="modal-zoom" class="fixed inset-0 bg-black/95 hidden z-[300] flex items-center justify-center p-4 cursor-zoom-out"
+       onclick="closeModal('modal-zoom')">
+    <img id="zoom-img" class="max-w-full max-h-full shadow-2xl rounded-lg">
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
