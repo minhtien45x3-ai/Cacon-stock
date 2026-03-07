@@ -1,766 +1,187 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TRADING JOURNAL PRO v3.2 (PRO UI)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Journal PRO</title>
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body class="theme-dark">
-  <header class="topbar">
-    <div class="brand">
-      <div class="logo">TJ</div>
-      <div>
-        <div class="title">TRADING JOURNAL <span class="accent">PRO v3.2</span></div>
-        <div class="subtitle">Full Screen • Pro UI • Themes • Focus Analysis</div>
-      </div>
-    </div>
-
-    <div class="top-actions">
-      <div class="selectWrap">
-        <span class="selectLabel">Theme</span>
-        <select id="themeSelect" class="select" onchange="changeTheme(this.value)">
-          <option value="theme-dark">Dark Navy</option>
-          <option value="theme-slate">Slate Gray</option>
-          <option value="theme-emerald">Emerald</option>
-          <option value="theme-purple">Purple</option>
-        </select>
-      </div>
-
-      <button class="btn ghost" onclick="seedDemo(true)">DEMO</button>
-      <button class="btn ghost danger" onclick="hardReset()">RESET</button>
-    </div>
-  </header>
-
-  <div class="marquee">
-    <div class="marquee-track" id="marqueeText">
-      Kỷ luật > Cảm xúc • Cắt lỗ nhanh • Chỉ chọn kèo A+ • Market yếu thì giảm tỷ trọng • Không bình quân giá xuống •
-    </div>
-  </div>
-
-  <nav class="tabs">
-    <button class="tabbtn active" id="btn-dashboard" onclick="switchTab('dashboard')">Tổng quan</button>
-    <button class="tabbtn" id="btn-market" onclick="switchTab('market')">Thị trường</button>
-    <button class="tabbtn" id="btn-radar" onclick="switchTab('radar')">Radar</button>
-    <button class="tabbtn" id="btn-system" onclick="switchTab('system')">Hệ thống</button>
-    <button class="tabbtn" id="btn-analysis" onclick="switchTab('analysis')">Phân tích</button>
-    <button class="tabbtn" id="btn-capital" onclick="switchTab('capital')">Quản lý vốn</button>
-    <button class="tabbtn" id="btn-journal" onclick="switchTab('journal')">Nhật ký</button>
-    <button class="tabbtn" id="btn-wiki" onclick="switchTab('wiki')">Mẫu hình</button>
-    <button class="tabbtn" id="btn-settings" onclick="switchTab('settings')">Cài đặt</button>
-  </nav>
-
-  <main class="wrap">
-
-    <!-- DASHBOARD -->
-    <section class="tab" id="tab-dashboard">
-      <div class="grid4">
-        <div class="card stat green">
-          <div class="label">Tài sản (Equity)</div>
-          <div class="value mono" id="dash-equity">0đ</div>
-          <div class="hint" id="dash-equity-sub">Vốn gốc: 0đ</div>
-        </div>
-
-        <div class="card stat blue">
-          <div class="label">PNL ròng</div>
-          <div class="value mono" id="dash-pnl">0đ</div>
-          <div class="hint" id="dash-pnl-sub">Lệnh đóng: 0</div>
-        </div>
-
-        <div class="card stat amber">
-          <div class="label">Win rate</div>
-          <div class="value mono" id="dash-winrate">0%</div>
-          <div class="hint" id="dash-winrate-sub">Avg %: 0%</div>
-        </div>
-
-        <div class="card stat rose">
-          <div class="label">Max Drawdown</div>
-          <div class="value mono" id="dash-mdd">0%</div>
-          <div class="hint" id="dash-mdd-sub">Profit Factor: 0.00</div>
-        </div>
-      </div>
-
-      <!-- Emphasis: Equity to hơn -->
-      <div class="grid2 mt">
-        <div class="card xl">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Equity curve (từ Nhật ký)</div>
-              <div class="sectionSub">Tự cập nhật theo lệnh đóng + vốn gốc</div>
-            </div>
-            <div class="row gap">
-              <button class="btn chip" onclick="rebuildAll()">Refresh</button>
-              <button class="btn chip" onclick="switchTab('journal')">Vào Nhật ký</button>
-            </div>
-          </div>
-          <div class="chartBox h460">
-            <canvas id="equityChart"></canvas>
-          </div>
-        </div>
-
-        <div class="card lg">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Hiệu suất theo tháng</div>
-              <div class="sectionSub">Tổng PNL theo tháng (lệnh đóng)</div>
-            </div>
-            <button class="btn chip" onclick="switchTab('system')">Xem Hệ thống</button>
-          </div>
-          <div class="chartBox h360">
-            <canvas id="monthChart"></canvas>
-          </div>
-
-          <div class="grid6 mt">
-            <div class="card mini">
-              <div class="label">Expectancy</div>
-              <div class="value mono" id="pro-expect">0đ</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Profit Factor</div>
-              <div class="value mono" id="pro-pf">0.00</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Avg win</div>
-              <div class="value mono" id="pro-avgwin">0đ</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Avg loss</div>
-              <div class="value mono" id="pro-avgloss">0đ</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Avg %</div>
-              <div class="value mono" id="pro-avgpct">0%</div>
-            </div>
-            <div class="card mini">
-              <div class="label">E/Trade</div>
-              <div class="value mono" id="pro-ept">0đ</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- MARKET -->
-    <section class="tab hidden" id="tab-market">
-      <div class="grid3">
-        <div class="card">
-          <div class="sectionTitle">Distribution days (VNI)</div>
-          <div class="sectionSub">1-2 bình thường • 3 rủi ro • 4 giảm 50% • 5+ về tiền mặt</div>
-
-          <div class="bigInputRow mt">
-            <input id="m-dist" type="number" min="0" class="bigInput mono" value="2" oninput="updateMarket(true)" />
-          </div>
-
-          <div class="alert mt">
-            <div class="alertTitle" id="m-title">THỊ TRƯỜNG BÌNH THƯỜNG</div>
-            <div class="alertDesc" id="m-desc">Có thể giao dịch nhưng vẫn ưu tiên kỷ luật.</div>
-          </div>
-
-          <div class="row gap mt">
-            <button class="btn chip" onclick="applyMarketToSystem()">Áp dụng vào Hệ thống</button>
-            <button class="btn chip" onclick="switchTab('analysis')">Sang Phân tích</button>
-          </div>
-        </div>
-
-        <div class="card center">
-          <div class="sectionTitle">Sentiment</div>
-          <div class="sectionSub">Fear ↔ Neutral ↔ Greed</div>
-
-          <div class="chartBox h300">
-            <canvas id="sentimentChart"></canvas>
-          </div>
-
-          <div class="row gap mt">
-            <button class="btn chip" onclick="setSentiment(20,true)">Fear</button>
-            <button class="btn chip" onclick="setSentiment(50,true)">Neutral</button>
-            <button class="btn chip" onclick="setSentiment(85,true)">Greed</button>
-          </div>
-
-          <div class="muted mt">Giá trị: <span class="mono" id="m-sent-val">50</span></div>
-        </div>
-
-        <div class="card">
-          <div class="sectionTitle">Ngành dẫn dắt</div>
-          <div class="sectionSub">Lưu để nhắc checklist khi tạo lệnh / radar</div>
-
-          <textarea id="m-sectors" class="ta mt" rows="9" placeholder="VD: BANK, CÔNG NGHỆ, CHỨNG KHOÁN..." oninput="saveMarketSectors()"></textarea>
-
-          <div class="row gap mt">
-            <button class="btn chip" onclick="suggestSectors()">Gợi ý</button>
-            <button class="btn chip" onclick="switchTab('radar')">Sang Radar</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- RADAR -->
-    <section class="tab hidden" id="tab-radar">
-      <div class="row between">
-        <div>
-          <div class="sectionTitle">Radar cổ phiếu</div>
-          <div class="sectionSub">Chấm điểm 0–100 • Tự xếp hạng • Liên kết sang Nhật ký & Phân tích</div>
-        </div>
-        <div class="row gap">
-          <button class="btn primary" onclick="openRadarModal()">Thêm mã</button>
-          <button class="btn chip" onclick="syncRadarFromJournal()">Sync từ Nhật ký</button>
-        </div>
-      </div>
-
-      <div class="grid2 mt">
-        <div class="card">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Danh sách Watchlist</div>
-              <div class="sectionSub">Click 1 mã để xem radar</div>
-            </div>
-            <button class="btn chip" onclick="sortRadar('score')">Sort Score</button>
-          </div>
-
-          <div class="tableWrap mt">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Mã</th>
-                  <th>Setup</th>
-                  <th class="right">Score</th>
-                  <th class="center">Trạng thái</th>
-                  <th class="center">Hành động</th>
-                </tr>
-              </thead>
-              <tbody id="radarBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card lg">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Radar chart</div>
-              <div class="sectionSub">RS • Vol • Base • Trend • Market-fit</div>
-            </div>
-            <div class="row gap">
-              <button class="btn chip" onclick="switchTab('analysis')">Sang Phân tích</button>
-              <button class="btn chip" onclick="switchTab('journal')">Sang Nhật ký</button>
-            </div>
-          </div>
-
-          <div class="chartBox h420 mt">
-            <canvas id="radarChart"></canvas>
-          </div>
-
-          <div class="grid3 mt">
-            <div class="card mini">
-              <div class="label">Mã đang chọn</div>
-              <div class="value mono" id="r-selected">—</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Score</div>
-              <div class="value mono" id="r-score">0</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Gợi ý</div>
-              <div class="value mono" id="r-action">—</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- SYSTEM -->
-    <section class="tab hidden" id="tab-system">
-      <div class="row between">
-        <div>
-          <div class="sectionTitle">Phân tích hệ thống</div>
-          <div class="sectionSub">Thống kê theo mẫu hình • Winrate theo setup • Xếp hạng</div>
-        </div>
-        <div class="row gap">
-          <button class="btn chip" onclick="rebuildAll()">Refresh</button>
-          <button class="btn chip" onclick="switchTab('wiki')">Mở Wiki</button>
-        </div>
-      </div>
-
-      <div class="grid2 mt">
-        <div class="card">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Xếp hạng mẫu hình (Winrate)</div>
-              <div class="sectionSub">Tính từ lệnh đóng trong Nhật ký</div>
-            </div>
-            <button class="btn chip" onclick="switchTab('journal')">Thêm lệnh</button>
-          </div>
-
-          <div class="tableWrap mt">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Setup</th>
-                  <th class="right">Lệnh</th>
-                  <th class="right">Win%</th>
-                  <th class="right">Avg%</th>
-                  <th class="right">PNL</th>
-                </tr>
-              </thead>
-              <tbody id="sysSetupBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card lg">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Số lệnh theo tháng</div>
-              <div class="sectionSub">Tổng lệnh mở/đóng theo tháng</div>
-            </div>
-            <button class="btn chip" onclick="switchTab('dashboard')">Về Dashboard</button>
-          </div>
-
-          <div class="chartBox h420 mt">
-            <canvas id="sysTradesChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid2 mt">
-        <div class="card">
-          <div class="sectionTitle">Kết luận nhanh</div>
-          <div class="sectionSub">Tự gợi ý dựa vào Market + hiệu suất setup</div>
-          <div class="tips mt" id="sysTips"></div>
-        </div>
-
-        <div class="card">
-          <div class="sectionTitle">Checklist nhanh (từ Wiki)</div>
-          <div class="sectionSub">Chọn setup để hiện checklist</div>
-
-          <select class="input mt" id="sysPickSetup" onchange="renderSystemChecklist()"></select>
-          <div class="card inset mt">
-            <div class="label">Checklist</div>
-            <div id="sysChecklist" class="checklist mt"></div>
-          </div>
-          <div class="row gap mt">
-            <button class="btn chip" onclick="switchTab('analysis')">So sánh chart</button>
-            <button class="btn chip" onclick="switchTab('journal')">Tạo lệnh</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ANALYSIS (FOCUS) -->
-    <section class="tab hidden" id="tab-analysis">
-      <div class="row between">
-        <div>
-          <div class="sectionTitle">Phân tích trước khi vào lệnh</div>
-          <div class="sectionSub">So sánh mẫu vs chart thực tế (full focus). Checklist thu gọn bên phải.</div>
-        </div>
-
-        <div class="row gap">
-          <button class="btn chip" onclick="triggerAnalysisUpload()">Tải ảnh chart</button>
-          <button class="btn chip" onclick="toggleAnalysisSide()">Checklist</button>
-          <button class="btn primary" onclick="pushAnalysisToJournal()">Đẩy sang Nhật ký</button>
-        </div>
-      </div>
-
-      <!-- MAIN: compare lớn + side checklist -->
-      <div class="analysisLayout mt">
-        <div class="card analysisMain xl">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">So sánh chart</div>
-              <div class="sectionSub">Kéo slider để so sánh 2 biểu đồ</div>
-            </div>
-            <div class="row gap">
-              <button class="btn chip" onclick="resetAnalysis()">Xóa ảnh thực tế</button>
-            </div>
-          </div>
-
-          <div class="compare big mt" id="compareBox">
-            <img id="img-real" class="img real" alt="">
-            <div id="overlay" class="overlay">
-              <img id="img-template" class="img template" alt="">
-            </div>
-
-            <input id="slider" class="slider disabled" type="range" min="0" max="100" value="50"
-                   oninput="moveSlider(this.value)">
-
-            <div class="emptyHint" id="ana-hint">
-              <div class="hintTitle">Chưa có ảnh chart thực tế</div>
-              <div class="hintSub">Bấm “Tải ảnh chart” để chọn ảnh. Sau khi có ảnh, slider sẽ kéo được.</div>
-              <button class="btn primary" onclick="triggerAnalysisUpload()">Tải ảnh chart</button>
-            </div>
-          </div>
-
-          <input type="file" id="ana-file" class="hidden" accept="image/*" onchange="onAnalysisPicked(event)">
-
-          <div class="grid3 mt">
-            <div class="card mini">
-              <div class="label">Mẫu đang chọn</div>
-              <div class="value mono" id="ana-selected">—</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Market</div>
-              <div class="value mono" id="ana-market">—</div>
-            </div>
-            <div class="card mini">
-              <div class="label">Sẵn sàng</div>
-              <div class="value mono" id="ana-ready">NO</div>
-            </div>
-          </div>
-        </div>
-
-        <aside class="card analysisSide" id="analysisSide">
-          <div class="row between">
-            <div>
-              <div class="sectionTitle">Mẫu hình (Wiki)</div>
-              <div class="sectionSub">Chọn 1 mẫu để tải ảnh mẫu + checklist</div>
-            </div>
-            <button class="btn chip" onclick="switchTab('wiki')">Mở Wiki</button>
-          </div>
-
-          <div id="ana-menu" class="menu mt"></div>
-
-          <div class="card inset mt">
-            <div class="label">Checklist</div>
-            <div id="ana-checklist" class="checklist mt"></div>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <!-- CAPITAL -->
-    <section class="tab hidden" id="tab-capital">
-      <div class="grid2">
-        <div class="card lg">
-          <div class="sectionTitle">Vốn & rủi ro (Position sizing)</div>
-          <div class="sectionSub">Tự tính khối lượng theo risk % / lệnh</div>
-
-          <div class="form mt">
-            <label>Vốn tổng (Equity hiện tại)</label>
-            <input id="cap-equity" class="input mono" type="number" value="2000000000" oninput="calcPosition()"/>
-
-            <label>Rủi ro / lệnh (%)</label>
-            <input id="cap-riskpct" class="input mono" type="number" value="1" step="0.1" oninput="calcPosition()"/>
-
-            <label>Giá mua</label>
-            <input id="cap-entry" class="input mono" type="number" placeholder="Lấy từ Nhật ký/Phân tích/Radar" oninput="calcPosition()"/>
-
-            <label>Giá cắt lỗ (Stop)</label>
-            <input id="cap-stop" class="input mono" type="number" placeholder="Lấy từ Nhật ký" oninput="calcPosition()"/>
-
-            <div class="row gap mt">
-              <button class="btn chip" onclick="pullFromLastTrade()">Lấy lệnh gần nhất</button>
-              <button class="btn chip" onclick="switchTab('journal')">Vào Nhật ký</button>
-            </div>
-          </div>
-
-          <div class="card inset mt">
-            <div class="row between">
-              <div class="label">Kết quả</div>
-              <button class="btn chip" onclick="copyPosition()">Copy</button>
-            </div>
-
-            <div class="kpis mt">
-              <div>
-                <div class="kLabel">Risk tiền</div>
-                <div class="kVal mono" id="cap-riskmoney">0đ</div>
-              </div>
-              <div>
-                <div class="kLabel">Khoảng SL</div>
-                <div class="kVal mono" id="cap-slrange">0</div>
-              </div>
-              <div>
-                <div class="kLabel">Khối lượng</div>
-                <div class="kVal mono" id="cap-shares">0 CP</div>
-              </div>
-              <div>
-                <div class="kLabel">Giá trị vị thế</div>
-                <div class="kVal mono" id="cap-position">0đ</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="sectionTitle">Gợi ý kỷ luật (Minervini)</div>
-          <div class="sectionSub">Dựa vào Market + hiệu suất setup</div>
-
-          <div class="tips mt" id="cap-tips"></div>
-
-          <div class="row gap mt">
-            <button class="btn chip" onclick="switchTab('market')">Xem Market</button>
-            <button class="btn chip" onclick="switchTab('system')">Xem Hệ thống</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- JOURNAL -->
-    <section class="tab hidden" id="tab-journal">
-      <div class="row between">
-        <div>
-          <div class="sectionTitle">Nhật ký giao dịch</div>
-          <div class="sectionSub">Sửa / Xóa / Đóng lại hoạt động đầy đủ • Có đính ảnh chart</div>
-        </div>
-
-        <div class="row gap">
-          <button class="btn primary" onclick="openTradeModal()">Thêm lệnh</button>
-          <button class="btn chip" onclick="switchTab('analysis')">Phân tích</button>
-          <button class="btn chip" onclick="exportJSON()">Export JSON</button>
-        </div>
-      </div>
-
-      <div class="grid4 mt">
-        <div class="card mini"><div class="label">Tổng lệnh</div><div class="value mono" id="j-total">0</div></div>
-        <div class="card mini"><div class="label">Lệnh đóng</div><div class="value mono" id="j-closed">0</div></div>
-        <div class="card mini"><div class="label">Lệnh mở</div><div class="value mono" id="j-open">0</div></div>
-        <div class="card mini"><div class="label">Avg %</div><div class="value mono" id="j-avgpct">0%</div></div>
-      </div>
-
-      <div class="card mt">
-        <div class="tableWrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Ngày</th>
-                <th>Mã</th>
-                <th>Setup</th>
-                <th class="right">KL</th>
-                <th class="right">Mua</th>
-                <th class="right">Bán</th>
-                <th class="right">% PNL</th>
-                <th class="center">Chart</th>
-                <th class="center">Trạng thái</th>
-                <th class="center">Hành động</th>
-              </tr>
-            </thead>
-            <tbody id="journalBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- WIKI -->
-    <section class="tab hidden" id="tab-wiki">
-      <div class="row between">
-        <div>
-          <div class="sectionTitle">Wiki mẫu hình</div>
-          <div class="sectionSub">Tạo mới có nút chèn ảnh • Sửa / Xóa hoạt động</div>
-        </div>
-        <div class="row gap">
-          <button class="btn primary" onclick="openWikiModal()">Tạo mẫu hình</button>
-          <button class="btn chip" onclick="switchTab('analysis')">Sang Phân tích</button>
-        </div>
-      </div>
-
-      <div id="wikiGrid" class="grid3 mt"></div>
-    </section>
-
-    <!-- SETTINGS -->
-    <section class="tab hidden" id="tab-settings">
-      <div class="grid2">
-        <div class="card">
-          <div class="sectionTitle">Thiết lập chung</div>
-          <div class="sectionSub">Lưu vào localStorage (không mất khi reload)</div>
-
-          <div class="form mt">
-            <label>Vốn gốc (Base equity)</label>
-            <input id="s-base" class="input mono" type="number" />
-
-            <label>Risk mặc định / lệnh (%)</label>
-            <input id="s-risk" class="input mono" type="number" step="0.1" />
-
-            <label>Chữ chạy (Marquee)</label>
-            <input id="s-marquee" class="input" />
-
-            <div class="row gap mt">
-              <button class="btn primary" onclick="saveSettings()">Lưu</button>
-              <button class="btn chip" onclick="exportJSON()">Export JSON</button>
-              <button class="btn chip" onclick="triggerImport()">Import JSON</button>
-            </div>
-
-            <input type="file" id="importFile" class="hidden" accept="application/json" onchange="onImportJSON(event)"/>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="sectionTitle">Import nhanh CSV (Journal)</div>
-          <div class="sectionSub">Format: date,ticker,setup,vol,buy,sell,stop,notes</div>
-
-          <textarea id="csvBox" class="ta mt" rows="10" placeholder="2026-03-01,FPT,VCP,1000,120000,0,114000,breakout...
-2026-03-02,VCB,NỀN PHẲNG,500,92000,98000,88000,ok"></textarea>
-
-          <div class="row gap mt">
-            <button class="btn chip" onclick="pasteCSVSample()">Dán mẫu</button>
-            <button class="btn primary" onclick="importCSV()">IMPORT</button>
-            <button class="btn ghost danger" onclick="clearCSV()">Xóa</button>
-          </div>
-
-          <div class="muted mt" id="csvMsg">—</div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- MODAL: TRADE -->
-  <div class="modal hidden" id="tradeModal">
-    <div class="modalCard">
-      <div class="row between">
-        <div class="sectionTitle">Thêm / Sửa lệnh</div>
-        <button class="btn chip" onclick="closeTradeModal()">Đóng</button>
-      </div>
-
-      <div class="form mt grid2">
-        <div>
-          <label>Ngày</label>
-          <input id="t-date" class="input mono" type="date"/>
-        </div>
-        <div>
-          <label>Mã</label>
-          <input id="t-ticker" class="input mono" placeholder="VD: FPT"/>
-        </div>
-
-        <div>
-          <label>Setup (từ Wiki)</label>
-          <select id="t-setup" class="input"></select>
-        </div>
-        <div>
-          <label>Khối lượng</label>
-          <input id="t-vol" class="input mono" type="number" placeholder="1000"/>
-        </div>
-
-        <div>
-          <label>Giá mua</label>
-          <input id="t-buy" class="input mono" type="number" placeholder="118000"/>
-        </div>
-        <div>
-          <label>Giá bán (để 0 nếu đang mở)</label>
-          <input id="t-sell" class="input mono" type="number" placeholder="0"/>
-        </div>
-
-        <div>
-          <label>Stop (giá cắt lỗ)</label>
-          <input id="t-stop" class="input mono" type="number" placeholder="110000"/>
-        </div>
-        <div>
-          <label>Ghi chú</label>
-          <input id="t-notes" class="input" placeholder="breakout vol..."/>
-        </div>
-
-        <div class="row gap">
-          <button class="btn chip" onclick="attachTradeImage()">Chèn ảnh chart</button>
-          <button class="btn chip" onclick="pushTradeToCapital()">Đẩy sang Quản lý vốn</button>
-        </div>
-        <div class="muted">Ảnh: <span class="mono" id="t-img-status">CHƯA CÓ</span></div>
-
-        <input type="file" id="t-img-file" class="hidden" accept="image/*" onchange="onTradeImgPicked(event)"/>
-      </div>
-
-      <div class="row gap mt">
-        <button class="btn primary" onclick="saveTrade()">Lưu</button>
-        <button class="btn ghost" onclick="closeTradeModal()">Hủy</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: WIKI -->
-  <div class="modal hidden" id="wikiModal">
-    <div class="modalCard">
-      <div class="row between">
-        <div class="sectionTitle">Tạo / Sửa mẫu hình</div>
-        <button class="btn chip" onclick="closeWikiModal()">Đóng</button>
-      </div>
-
-      <div class="form mt">
-        <label>Tên mẫu</label>
-        <input id="w-title" class="input" placeholder="VD: VCP, Cốc tay cầm..."/>
-
-        <label>Checklist (mỗi dòng 1 ý)</label>
-        <textarea id="w-checklist" class="ta" rows="6" placeholder="VD:
-NỀN CHẶT
-VOL KHÔ CẠN
-BREAK PIVOT + VOL"></textarea>
-
-        <div class="row gap mt">
-          <button class="btn chip" onclick="attachWikiImage()">Chèn ảnh mẫu</button>
-          <button class="btn chip" onclick="clearWikiImage()">Xóa ảnh</button>
-          <div class="muted">Ảnh: <span class="mono" id="w-img-status">CHƯA CÓ</span></div>
-        </div>
-
-        <input type="file" id="w-img-file" class="hidden" accept="image/*" onchange="onWikiImgPicked(event)"/>
-      </div>
-
-      <div class="row gap mt">
-        <button class="btn primary" onclick="saveWiki()">Lưu</button>
-        <button class="btn ghost" onclick="closeWikiModal()">Hủy</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: RADAR -->
-  <div class="modal hidden" id="radarModal">
-    <div class="modalCard">
-      <div class="row between">
-        <div class="sectionTitle">Thêm / Sửa Radar</div>
-        <button class="btn chip" onclick="closeRadarModal()">Đóng</button>
-      </div>
-
-      <div class="form mt grid2">
-        <div>
-          <label>Mã</label>
-          <input id="rm-ticker" class="input mono" placeholder="FPT"/>
-        </div>
-        <div>
-          <label>Setup</label>
-          <select id="rm-setup" class="input"></select>
-        </div>
-
-        <div>
-          <label>RS (0-100)</label>
-          <input id="rm-rs" class="input mono" type="number" min="0" max="100" value="70"/>
-        </div>
-        <div>
-          <label>Volume (0-100)</label>
-          <input id="rm-vol" class="input mono" type="number" min="0" max="100" value="65"/>
-        </div>
-
-        <div>
-          <label>Base quality (0-100)</label>
-          <input id="rm-base" class="input mono" type="number" min="0" max="100" value="75"/>
-        </div>
-        <div>
-          <label>Trend (0-100)</label>
-          <input id="rm-trend" class="input mono" type="number" min="0" max="100" value="60"/>
-        </div>
-
-        <div>
-          <label>Market-fit (0-100)</label>
-          <input id="rm-marketfit" class="input mono" type="number" min="0" max="100" value="70"/>
-        </div>
-        <div>
-          <label>Ghi chú</label>
-          <input id="rm-notes" class="input" placeholder="leader, nền chặt..."/>
-        </div>
-      </div>
-
-      <div class="row gap mt">
-        <button class="btn primary" onclick="saveRadar()">Lưu</button>
-        <button class="btn ghost" onclick="closeRadarModal()">Hủy</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: IMAGE ZOOM -->
-  <div class="modal hidden" id="zoomModal" onclick="closeZoom()">
-    <img id="zoomImg" class="zoomImg" alt="">
-  </div>
-
-  <script src="app.js"></script>
+
+<header>
+
+<h1>Trading Journal PRO</h1>
+
+<select onchange="changeTheme(this.value)">
+<option value="theme-dark">Dark</option>
+<option value="theme-emerald">Emerald</option>
+<option value="theme-purple">Purple</option>
+</select>
+
+</header>
+
+
+<nav>
+
+<button onclick="switchTab('dashboard')">Dashboard</button>
+<button onclick="switchTab('market')">Market</button>
+<button onclick="switchTab('analysis')">Phân tích</button>
+<button onclick="switchTab('journal')">Nhật ký</button>
+<button onclick="switchTab('patterns')">Mẫu hình</button>
+<button onclick="switchTab('radar')">Radar</button>
+<button onclick="switchTab('takeprofit')">Chốt lời</button>
+<button onclick="switchTab('library')">Thư viện</button>
+<button onclick="switchTab('quiz')">Rèn luyện</button>
+
+</nav>
+
+
+<main>
+
+
+<section id="dashboard" class="tab">
+
+<h2>Tổng quan</h2>
+
+<canvas id="equityChart"></canvas>
+
+</section>
+
+
+
+<section id="market" class="tab hidden">
+
+<h2>Thị trường</h2>
+
+<label>Distribution days</label>
+
+<input id="distDays" type="number">
+
+<button onclick="updateMarket()">Cập nhật</button>
+
+<p id="marketStatus"></p>
+
+</section>
+
+
+
+<section id="analysis" class="tab hidden">
+
+<h2>So sánh biểu đồ</h2>
+
+<div class="compare">
+
+<img id="patternChart">
+
+<div class="overlay">
+<img id="realChart">
+</div>
+
+<input id="slider-range" type="range" min="0" max="100" value="50">
+
+</div>
+
+<input type="file" id="uploadChart">
+
+</section>
+
+
+
+<section id="journal" class="tab hidden">
+
+<h2>Nhật ký giao dịch</h2>
+
+<table id="journalTable">
+
+<tr>
+<th>Date</th>
+<th>Ticker</th>
+<th>Entry</th>
+<th>Exit</th>
+<th>%</th>
+</tr>
+
+</table>
+
+</section>
+
+
+
+<section id="patterns" class="tab hidden">
+
+<h2>Mẫu hình</h2>
+
+<button onclick="addPattern()">Thêm mẫu</button>
+
+<div id="patternList"></div>
+
+</section>
+
+
+
+<section id="radar" class="tab hidden">
+
+<h2>Radar cổ phiếu</h2>
+
+<table id="radarTable"></table>
+
+</section>
+
+
+
+<section id="takeprofit" class="tab hidden">
+
+<h2>Chốt lời</h2>
+
+<label>Entry</label>
+<input id="entryPrice">
+
+<label>Stop</label>
+<input id="stopPrice">
+
+<button onclick="calcRR()">Tính R:R</button>
+
+<p id="rrResult"></p>
+
+</section>
+
+
+
+<section id="library" class="tab hidden">
+
+<h2>Thư viện kiến thức</h2>
+
+<button onclick="openLibraryModal()">Thêm bài</button>
+
+<div id="libraryList"></div>
+
+<div id="libraryContent"></div>
+
+</section>
+
+
+
+<section id="quiz" class="tab hidden">
+
+<h2>Rèn luyện</h2>
+
+<div id="quizBox"></div>
+
+</section>
+
+
+
+</main>
+
+<script src="app.js"></script>
+
 </body>
 </html>
