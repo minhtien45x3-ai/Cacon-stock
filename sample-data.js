@@ -1,5 +1,6 @@
 export const sampleData = {
   market: { distributionDays: 3 },
+  analysis: { selectedPatternId: 'vcp', currentChart: 'assets/images/phan_tich.png' },
   journal: [
     { id: 1, date: '2026-03-01', ticker: 'FPT', setup: 'VCP', buy: 127.5, sell: 138.2, qty: 1000, r: 2.1, pnl: 10700, note: 'Breakout nền chặt với volume tăng.' },
     { id: 2, date: '2026-02-17', ticker: 'DGC', setup: 'Cup with Handle', buy: 121, sell: 133.8, qty: 900, r: 2, pnl: 11520, note: 'Tay cầm ngắn, RS tăng.' },
@@ -28,6 +29,16 @@ export const sampleData = {
         'Tránh tay cầm quá sâu'
       ],
       image: 'assets/images/mau_hinh.png'
+    },
+    {
+      id: '3c', name: '3C',
+      conditions: [
+        'Cú tăng trước đó mạnh và rõ',
+        'Co hẹp - cạn cung - cất cánh',
+        'Nền ngắn, thanh khoản thu hẹp',
+        'Điểm mua khi vượt đỉnh gần nhất'
+      ],
+      image: 'assets/images/mau_hinh.png'
     }
   ],
   radar: {
@@ -43,9 +54,9 @@ export const sampleData = {
     ]
   },
   psychology: [
-    { date: '2026-03-05', mood: 'Bình tĩnh', note: 'Tuân thủ điểm mua, không FOMO.' }
+    { id: 1, date: '2026-03-05', mood: 'Bình tĩnh', note: 'Tuân thủ điểm mua, không FOMO.' }
   ],
   library: [
-    { title: 'Nguyên tắc chọn cổ phiếu dẫn dắt', content: 'EPS tăng, doanh thu tăng, nền giá chặt, thanh khoản cao.' }
+    { id: 1, title: 'Nguyên tắc chọn cổ phiếu dẫn dắt', content: 'EPS tăng, doanh thu tăng, nền giá chặt, thanh khoản cao.' }
   ]
 };

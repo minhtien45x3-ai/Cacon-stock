@@ -1,18 +1,17 @@
-# CaCon Stock PRO V10.2
+# CaCon Stock PRO V10.3
 
-## Điểm mới
-- Đã tách module thật bằng ES Modules
-- Có dữ liệu mẫu trong `js/data/sample-data.js`
-- Có liên kết dữ liệu giữa các file:
-  - `journal.js` thêm lệnh -> `storage.js` lưu -> `dashboard.js` đọc lại số lệnh/winrate/vốn
-  - `patterns.js` thêm mẫu -> `analysis.js` đọc điều kiện mẫu hình
-  - `market.js` đổi ngày phân phối -> `dashboard.js` đổi khuyến nghị thị trường
+Bản này đã:
+- tách tab riêng theo từng mô-đun
+- có dữ liệu mẫu
+- các file liên kết với nhau qua `state.js` + `storage.js`
+- Nhật ký có thêm / sửa / xóa / lọc theo setup
+- Mẫu hình có thêm / sửa / xóa / up ảnh
+- Phân tích đọc mẫu từ tab Mẫu hình và cho up chart hiện tại
+- Radar có 3 mô-đun và chuyển mã giữa các nhóm
+- Tâm lý & Thư viện có form thêm nhanh
 
-## Cấu trúc
-- `js/core/`: storage, state, utils, dom
+## Cấu trúc chính
+- `js/core/`: state, storage, utils
 - `js/data/`: dữ liệu mẫu
-- `js/modules/`: từng tab riêng
-- `js/app.js`: router tab và khởi động ứng dụng
-
-## Cách dùng
-Mở `index.html` hoặc upload toàn bộ lên GitHub Pages.
+- `js/modules/`: dashboard, market, journal, analysis, patterns, radar, notes
+- `assets/images/`: ảnh nền minh họa
