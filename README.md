@@ -1,31 +1,41 @@
-# CaCon Stock PRO V9
+# CaCon Stock PRO V10
 
-Bản này chạy trực tiếp trên GitHub Pages, không cần Firebase, không cần đăng nhập.
+Bản V10 đã được tách thành các module riêng để dễ sửa, dễ nâng cấp và dễ triển khai trên GitHub Pages.
 
-## Cách dùng trên GitHub
-1. Tạo repository mới trên GitHub
-2. Upload toàn bộ file trong thư mục này
-3. Vào **Settings → Pages**
-4. Chọn **Deploy from a branch**
-5. Chọn **main** và thư mục **/root**
+## Cấu trúc thư mục
+- `index.html`
+- `style.css`
+- `assets/`
+- `js/core/`
+  - `utils.js`
+  - `storage.js`
+  - `state.js`
+  - `dom.js`
+- `js/modules/`
+  - `dashboard.js`
+  - `market.js`
+  - `journal.js`
+  - `patterns.js`
+  - `analysis.js`
+  - `radar.js`
+  - `notes.js`
+- `js/app.js`
 
-## Tính năng chính
-- Dashboard tổng quan với hàng chữ chạy
-- Đường cong vốn từ dữ liệu nhật ký
-- Thống kê số lệnh, winrate, mẫu hình hiệu quả nhất
-- Thị trường theo số ngày phân phối
-- Nhật ký giao dịch: thêm / sửa / xóa / lọc theo setup
-- Mẫu hình: thêm / sửa / xóa / upload ảnh
-- Phân tích hệ thống: checklist + so sánh chart hiện tại với mẫu
-- Radar 3 mô-đun:
-  - Cổ phiếu gần điểm mua
-  - Cổ phiếu theo dõi
-  - Cổ phiếu dài hạn theo nến tuần
-- Ghi chú Tâm lý và Thư viện
-- Xuất / nhập dữ liệu JSON
+## Tính năng
+- Không cần đăng nhập
+- Chạy trực tiếp trên GitHub Pages
+- Dashboard tổng quan
+- Nhật ký giao dịch
+- Mẫu hình + upload ảnh
+- Phân tích hệ thống
+- Radar 3 mô-đun
+- Ghi chú Tâm lý / Thư viện
+- Xuất nhập dữ liệu JSON
 
-## Lưu dữ liệu
-Dữ liệu được lưu bằng **localStorage** trên trình duyệt.
+## Cách dùng
+1. Upload toàn bộ thư mục lên GitHub
+2. Bật GitHub Pages
+3. Mở web là dùng ngay
 
-## Khôi phục dữ liệu mẫu
-Bấm nút **Nạp dữ liệu mẫu** ở góc phải trên cùng.
+## Dữ liệu
+Dữ liệu lưu bằng `localStorage` với key `cacon-stock-v10`.
