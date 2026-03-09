@@ -1,41 +1,18 @@
-# CaCon Stock PRO V10
+# CaCon Stock PRO V10.2
 
-Bản V10 đã được tách thành các module riêng để dễ sửa, dễ nâng cấp và dễ triển khai trên GitHub Pages.
+## Điểm mới
+- Đã tách module thật bằng ES Modules
+- Có dữ liệu mẫu trong `js/data/sample-data.js`
+- Có liên kết dữ liệu giữa các file:
+  - `journal.js` thêm lệnh -> `storage.js` lưu -> `dashboard.js` đọc lại số lệnh/winrate/vốn
+  - `patterns.js` thêm mẫu -> `analysis.js` đọc điều kiện mẫu hình
+  - `market.js` đổi ngày phân phối -> `dashboard.js` đổi khuyến nghị thị trường
 
-## Cấu trúc thư mục
-- `index.html`
-- `style.css`
-- `assets/`
-- `js/core/`
-  - `utils.js`
-  - `storage.js`
-  - `state.js`
-  - `dom.js`
-- `js/modules/`
-  - `dashboard.js`
-  - `market.js`
-  - `journal.js`
-  - `patterns.js`
-  - `analysis.js`
-  - `radar.js`
-  - `notes.js`
-- `js/app.js`
-
-## Tính năng
-- Không cần đăng nhập
-- Chạy trực tiếp trên GitHub Pages
-- Dashboard tổng quan
-- Nhật ký giao dịch
-- Mẫu hình + upload ảnh
-- Phân tích hệ thống
-- Radar 3 mô-đun
-- Ghi chú Tâm lý / Thư viện
-- Xuất nhập dữ liệu JSON
+## Cấu trúc
+- `js/core/`: storage, state, utils, dom
+- `js/data/`: dữ liệu mẫu
+- `js/modules/`: từng tab riêng
+- `js/app.js`: router tab và khởi động ứng dụng
 
 ## Cách dùng
-1. Upload toàn bộ thư mục lên GitHub
-2. Bật GitHub Pages
-3. Mở web là dùng ngay
-
-## Dữ liệu
-Dữ liệu lưu bằng `localStorage` với key `cacon-stock-v10`.
+Mở `index.html` hoặc upload toàn bộ lên GitHub Pages.

@@ -1,87 +1,54 @@
+import { state } from './core/state.js';
+import { seedSampleData, exportState, importState } from './core/storage.js';
+import { renderDashboard, mountDashboard } from './modules/dashboard.js';
+import { renderMarket, bindMarket } from './modules/market.js';
+import { renderJournal, bindJournal } from './modules/journal.js';
+import { renderAnalysis } from './modules/analysis.js';
+import { renderPatterns, bindPatterns } from './modules/patterns.js';
+import { renderRadar } from './modules/radar.js';
+import { renderNotes } from './modules/notes.js';
 
-function bindTabEvents() {
-  const buttons = document.querySelectorAll('.tab-btn');
-  const panes = document.querySelectorAll('.tab-pane');
-  const activate = (tab) => {
-    buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-    panes.forEach(pane => pane.classList.toggle('active', pane.id === `tab-${tab}`));
-    localStorage.setItem('cacon-active-tab', tab);
-  };
-  buttons.forEach(btn => btn.addEventListener('click', () => activate(btn.dataset.tab)));
-  activate(localStorage.getItem('cacon-active-tab') || 'dashboard');
+const tabs = [
+  { id: 'dashboard', label: 'Tổng quan', render: renderDashboard, bind: mountDashboard },
+  { id: 'market', label: 'Thị trường', render: renderMarket, bind: bindMarket },
+  { id: 'journal', label: 'Nhật ký', render: renderJournal, bind: bindJournal },
+  { id: 'analysis', label: 'Phân tích', render: renderAnalysis },
+  { id: 'patterns', label: 'Mẫu hình', render: renderPatterns, bind: bindPatterns },
+  { id: 'radar', label: 'Radar', render: renderRadar },
+  { id: 'notes', label: 'Tâm lý & Thư viện', render: renderNotes }
+];
+
+let activeTab = localStorage.getItem('cacon-active-tab') || 'dashboard';
+
+function renderTabs() {
+  const root = document.getElementById('tabs');
+  root.innerHTML = tabs.map(t => `<button class="tab-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`).join('');
+  root.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    localStorage.setItem('cacon-active-tab', activeTab);
+    renderApp();
+  }));
 }
-import { getData, saveData, resetToSample } from './core/storage.js';
-import { initModalClosers, showImage } from './core/dom.js';
-import { renderMarquee, renderMetrics, renderEquityChart, renderSetupRanking, renderMonthStats, getStats } from './modules/dashboard.js';
-import { renderJournal, bindJournalEvents, openTradeModal } from './modules/journal.js';
-import { renderPatternList, bindPatternEvents, openPatternModal } from './modules/patterns.js';
-import { renderAnalysis, bindAnalysisEvents } from './modules/analysis.js';
-import { renderRadar, bindRadarEvents, openRadarModal } from './modules/radar.js';
-import { renderNotes, bindNotesEvents } from './modules/notes.js';
-import { bindMarketEvents } from './modules/market.js';
 
 function renderApp() {
-  const data = getData();
-  const stats = getStats(data);
-  renderMarquee(data, stats);
-  renderMetrics(data, stats);
-  renderEquityChart(stats);
-  renderSetupRanking(stats);
-  renderMonthStats(stats);
-  renderJournal(data, stats);
-  renderPatternList(data);
-  renderAnalysis(data, stats);
-  renderRadar(data);
-  renderNotes(data);
-  lucide.createIcons();
+  renderTabs();
+  const current = tabs.find(t => t.id === activeTab) || tabs[0];
+  document.getElementById('app').innerHTML = current.render(state);
+  current.bind?.(renderApp);
 }
 
-function bindGlobalEvents() {
-  bindTabEvents();
-  initModalClosers();
-  bindJournalEvents(renderApp);
-  bindPatternEvents(renderApp, showImage);
-  bindAnalysisEvents(renderApp);
-  bindRadarEvents(renderApp, showImage);
-  bindNotesEvents();
-  bindMarketEvents(renderApp);
+document.getElementById('seed-btn').addEventListener('click', () => {
+  Object.assign(state, seedSampleData());
+  renderApp();
+});
+document.getElementById('export-btn').addEventListener('click', () => exportState(state));
+document.getElementById('import-file').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const imported = await importState(file);
+  Object.keys(state).forEach(k => delete state[k]);
+  Object.assign(state, imported);
+  renderApp();
+});
 
-  document.getElementById('seed-btn').addEventListener('click', () => {
-    if (!confirm('Ghi đè toàn bộ dữ liệu hiện tại bằng dữ liệu mẫu?')) return;
-    resetToSample();
-    renderApp();
-  });
-
-  document.getElementById('export-btn').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(getData(), null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'cacon-stock-v10-data.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  document.getElementById('import-file').addEventListener('change', async e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const text = await file.text();
-    try {
-      const data = JSON.parse(text);
-      saveData(data);
-      renderApp();
-      alert('Đã nhập dữ liệu thành công.');
-    } catch {
-      alert('File JSON không hợp lệ.');
-    }
-    e.target.value = '';
-  });
-}
-
-window.showImage = showImage;
-window.openTradeModal = openTradeModal;
-window.openPatternModal = openPatternModal;
-window.openRadarModal = openRadarModal;
-
-bindGlobalEvents();
 renderApp();

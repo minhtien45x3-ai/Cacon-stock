@@ -3,157 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CaCon Stock PRO V10.1</title>
+  <title>CaCon Stock PRO V10.2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="page-bg"></div>
-  <div class="page-glow glow-a"></div>
-  <div class="page-glow glow-b"></div>
-
-  <header class="sticky top-0 z-40 border-b border-white/10 backdrop-blur-xl bg-slate-950/75">
-    <div class="max-w-7xl mx-auto px-4 lg:px-6 py-3 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-      <div>
-        <div class="text-xl font-black tracking-tight">CACON <span class="text-emerald-400">STOCK</span> PRO V10.1</div>
-        <div class="text-[11px] text-slate-400">Bản đã tách module rõ ràng và hiển thị tab riêng cho từng khu vực</div>
-      </div>
-      <nav class="tab-nav" id="main-tabs">
-        <button class="tab-btn active" data-tab="dashboard">Tổng quan</button>
-        <button class="tab-btn" data-tab="market">Thị trường</button>
-        <button class="tab-btn" data-tab="journal">Nhật ký</button>
-        <button class="tab-btn" data-tab="analysis">Phân tích</button>
-        <button class="tab-btn" data-tab="patterns">Mẫu hình</button>
-        <button class="tab-btn" data-tab="radar">Radar</button>
-        <button class="tab-btn" data-tab="notes">Tâm lý & Thư viện</button>
-      </nav>
-      <div class="flex items-center gap-2 flex-wrap">
-        <button id="seed-btn" class="btn btn-secondary"><i data-lucide="database"></i><span>Nạp dữ liệu mẫu</span></button>
-        <button id="export-btn" class="btn btn-secondary"><i data-lucide="download"></i><span>Xuất dữ liệu</span></button>
-        <label class="btn btn-primary cursor-pointer">
-          <i data-lucide="upload"></i><span>Nhập dữ liệu</span>
-          <input type="file" id="import-file" class="hidden" accept="application/json" />
-        </label>
-      </div>
+  <header class="topbar">
+    <div>
+      <div class="brand">CACON <span>STOCK PRO V10.2</span></div>
+      <div class="subtitle">Bản tách module thật, có dữ liệu mẫu và liên kết dữ liệu giữa các file</div>
+    </div>
+    <div class="header-actions">
+      <button id="seed-btn" class="ui-btn">Nạp dữ liệu mẫu</button>
+      <button id="export-btn" class="ui-btn">Xuất dữ liệu</button>
+      <label class="ui-btn ui-btn-green" for="import-file">Nhập dữ liệu</label>
+      <input id="import-file" type="file" accept="application/json" hidden />
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 lg:px-6 py-6 space-y-6">
-    <section id="tab-dashboard" class="tab-pane active space-y-6">
-      <section class="panel p-4 overflow-hidden">
-        <div class="ticker-wrap"><div id="market-marquee" class="ticker-track"></div></div>
-      </section>
-      <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
-        <div class="metric-card xl:col-span-1"><div class="metric-label">Khuyến nghị thị trường</div><div class="metric-value" id="market-status">Thị trường bình thường</div></div>
-        <div class="metric-card xl:col-span-1"><div class="metric-label">Ngày phân phối</div><div class="metric-value" id="dist-days-value">0</div></div>
-        <div class="metric-card xl:col-span-1"><div class="metric-label">Số lệnh</div><div class="metric-value" id="trade-count">0</div></div>
-        <div class="metric-card xl:col-span-1"><div class="metric-label">Winrate</div><div class="metric-value" id="winrate">0%</div></div>
-        <div class="metric-card xl:col-span-1"><div class="metric-label">Vốn hiện tại</div><div class="metric-value" id="current-capital">0 đ</div></div>
-        <div class="metric-card xl:col-span-1"><div class="metric-label">Mẫu hình tốt nhất</div><div class="metric-value" id="best-setup">-</div></div>
-      </section>
-      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div class="panel xl:col-span-2 p-5">
-          <div class="section-head"><div><div class="eyebrow">TỔNG QUAN</div><h2 class="section-title">Đường cong vốn và hiệu suất theo tháng</h2></div></div>
-          <div class="chart-box"><canvas id="equityChart"></canvas></div>
-        </div>
-        <div class="panel p-5">
-          <div class="section-head"><div><div class="eyebrow">XẾP HẠNG MẪU HÌNH</div><h2 class="section-title">Tỷ lệ thắng từ cao xuống thấp</h2></div></div>
-          <div id="setup-ranking" class="space-y-3"></div>
-        </div>
-      </section>
-    </section>
+  <nav id="tabs" class="tabs"></nav>
 
-    <section id="tab-market" class="tab-pane space-y-6">
-      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div class="panel xl:col-span-2 p-5">
-          <div class="section-head mb-4"><div><div class="eyebrow">THỊ TRƯỜNG</div><h2 class="section-title">Đánh giá dựa trên số ngày phân phối</h2></div></div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="subpanel p-4">
-              <label class="form-label">Số ngày phân phối hiện tại</label>
-              <input id="dist-days-input" type="number" min="0" max="10" class="input" />
-              <button id="save-market-btn" class="btn btn-primary mt-4 w-full justify-center">Cập nhật</button>
-            </div>
-            <div class="subpanel p-4 md:col-span-2">
-              <div class="form-label">Khuyến nghị hành động</div>
-              <div id="market-guidance" class="text-lg font-bold text-white leading-8"></div>
-              <div class="mt-4 text-sm text-slate-400">Quy tắc: 1-2 bình thường, 3 rủi ro tăng, 4 giảm margin còn 50% tiền mặt, 5-6 về 100% tiền mặt.</div>
-            </div>
-          </div>
-        </div>
-        <div class="panel p-5">
-          <div class="eyebrow">THỐNG KÊ THÁNG</div>
-          <h2 class="section-title mb-4">Số lệnh và lãi/lỗ</h2>
-          <div id="month-stats" class="space-y-3"></div>
-        </div>
-      </section>
-    </section>
-
-    <section id="tab-journal" class="tab-pane space-y-6">
-      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div class="panel xl:col-span-2 p-5">
-          <div class="section-head mb-4">
-            <div><div class="eyebrow">NHẬT KÝ GIAO DỊCH</div><h2 class="section-title">Quản lý lệnh theo setup</h2></div>
-            <div class="flex gap-2 flex-wrap">
-              <select id="journal-filter-setup" class="input min-w-[180px]"></select>
-              <button id="new-trade-btn" class="btn btn-primary"><i data-lucide="plus"></i><span>Thêm lệnh</span></button>
-            </div>
-          </div>
-          <div class="overflow-auto"><table class="w-full text-sm min-w-[860px]"><thead><tr class="text-slate-400 border-b border-white/10"><th class="text-left py-3">Ngày</th><th class="text-left py-3">Mã</th><th class="text-left py-3">Setup</th><th class="text-right py-3">Điểm mua</th><th class="text-right py-3">Điểm bán</th><th class="text-right py-3">KL</th><th class="text-right py-3">R</th><th class="text-right py-3">PnL</th><th class="text-right py-3">Thao tác</th></tr></thead><tbody id="journal-body"></tbody></table></div>
-        </div>
-        <div class="panel p-5"><div class="eyebrow">CHI TIẾT NHẬT KÝ</div><h2 class="section-title mb-4">Lệnh gần nhất</h2><div id="journal-side"></div></div>
-      </section>
-    </section>
-
-    <section id="tab-analysis" class="tab-pane space-y-6">
-      <section class="panel p-5">
-        <div class="section-head mb-4"><div><div class="eyebrow">PHÂN TÍCH HỆ THỐNG</div><h2 class="section-title">Checklist + so sánh chart hiện tại với mẫu</h2></div><select id="analysis-pattern-select" class="input min-w-[220px]"></select></div>
-        <div class="grid grid-cols-1 xl:grid-cols-[0.9fr,1.6fr] gap-5 items-start">
-          <div class="space-y-3" id="analysis-checklist"></div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="image-panel large-image-panel"><div class="image-panel-head">Mẫu chuẩn</div><img id="analysis-pattern-image" class="w-full h-[420px] object-contain rounded-2xl bg-slate-950/60" alt="Mẫu chuẩn" /></div>
-            <div class="image-panel large-image-panel"><div class="image-panel-head flex items-center justify-between gap-3"><span>Biểu đồ hiện tại</span><div class="flex items-center gap-2"><label class="btn btn-secondary !py-2 !px-3 cursor-pointer text-xs"><i data-lucide="image-plus"></i><span>Chèn ảnh</span><input id="analysis-upload" type="file" accept="image/*" class="hidden" /></label><button id="analysis-clear" class="btn btn-ghost !py-2 !px-3 text-xs">Xóa</button></div></div><img id="analysis-current-image" class="w-full h-[420px] object-contain rounded-2xl bg-slate-950/60" alt="Biểu đồ hiện tại" /></div>
-          </div>
-        </div>
-        <div id="analysis-stats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4"></div>
-      </section>
-    </section>
-
-    <section id="tab-patterns" class="tab-pane space-y-6">
-      <section class="panel p-5">
-        <div class="eyebrow">THƯ VIỆN MẪU HÌNH</div>
-        <div class="flex flex-col md:flex-row md:items-center gap-3 justify-between mb-4">
-          <h2 class="section-title">Tên mẫu hình, ảnh mẫu và điều kiện</h2>
-          <div class="flex gap-2 w-full md:w-auto">
-            <input id="pattern-search" class="input flex-1 md:w-64" placeholder="Tìm mẫu hình..." />
-            <button id="new-pattern-btn" class="btn btn-secondary"><i data-lucide="plus"></i><span>Thêm mẫu</span></button>
-          </div>
-        </div>
-        <div id="pattern-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      </section>
-    </section>
-
-    <section id="tab-radar" class="tab-pane space-y-6">
-      <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div class="panel p-5 xl:col-span-1"><div class="section-head mb-4"><div><div class="eyebrow">RADAR 1</div><h2 class="section-title">Cổ phiếu gần điểm mua</h2></div><button class="btn btn-secondary radar-new" data-type="nearBuy"><i data-lucide="plus"></i><span>Thêm mã</span></button></div><div id="radar-nearBuy" class="space-y-3"></div></div>
-        <div class="panel p-5 xl:col-span-1"><div class="section-head mb-4"><div><div class="eyebrow">RADAR 2</div><h2 class="section-title">Cổ phiếu theo dõi</h2></div><button class="btn btn-secondary radar-new" data-type="watch"><i data-lucide="plus"></i><span>Thêm mã</span></button></div><div id="radar-watch" class="space-y-3"></div></div>
-        <div class="panel p-5 xl:col-span-1"><div class="section-head mb-4"><div><div class="eyebrow">RADAR 3</div><h2 class="section-title">Cổ phiếu dài hạn</h2><div class="text-xs text-slate-400 mt-1">Ưu tiên mua ở nến tuần khi xu hướng lớn xác nhận.</div></div><button class="btn btn-secondary radar-new" data-type="longTerm"><i data-lucide="plus"></i><span>Thêm mã</span></button></div><div id="radar-longTerm" class="space-y-3"></div></div>
-      </section>
-    </section>
-
-    <section id="tab-notes" class="tab-pane space-y-6 pb-8">
-      <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="panel p-5"><div class="eyebrow">TÂM LÝ</div><h2 class="section-title mb-4">Checklist kỷ luật</h2><textarea id="mindset-notes" class="input h-48 resize-none" placeholder="Ghi lại trạng thái tâm lý, lỗi lặp lại, nguyên tắc cần giữ..."></textarea></div>
-        <div class="panel p-5"><div class="eyebrow">THƯ VIỆN</div><h2 class="section-title mb-4">Ghi chú hệ thống</h2><textarea id="library-notes" class="input h-48 resize-none" placeholder="Ghi chú sách, bài học, nguyên tắc giao dịch, liên thị trường..."></textarea></div>
-      </section>
-    </section>
-  </main>
-
-  <div id="trade-modal" class="modal hidden"><div class="modal-card max-w-3xl"><div class="modal-head"><h3 id="trade-modal-title" class="text-xl font-black">Thêm lệnh</h3><button class="icon-btn" data-close="trade-modal"><i data-lucide="x"></i></button></div><form id="trade-form" class="grid grid-cols-1 md:grid-cols-3 gap-4"><input type="hidden" name="id" /><div><label class="form-label">Ngày</label><input required name="date" type="date" class="input" /></div><div><label class="form-label">Mã</label><input required name="ticker" class="input" placeholder="VD: FPT" /></div><div><label class="form-label">Setup</label><select required name="setup" class="input"></select></div><div><label class="form-label">Điểm mua</label><input required name="buy" type="number" step="0.01" class="input" /></div><div><label class="form-label">Điểm bán</label><input required name="sell" type="number" step="0.01" class="input" /></div><div><label class="form-label">Khối lượng</label><input required name="qty" type="number" step="1" class="input" /></div><div><label class="form-label">R</label><input required name="rMultiple" type="number" step="0.1" class="input" /></div><div class="md:col-span-2"><label class="form-label">Ghi chú</label><input name="notes" class="input" placeholder="Pivot đẹp, volume bùng nổ..." /></div><div class="md:col-span-3 flex justify-end gap-2 mt-2"><button type="button" class="btn btn-ghost" data-close="trade-modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu lệnh</button></div></form></div></div>
-  <div id="pattern-modal" class="modal hidden"><div class="modal-card max-w-4xl"><div class="modal-head"><h3 id="pattern-modal-title" class="text-xl font-black">Thêm mẫu hình</h3><button class="icon-btn" data-close="pattern-modal"><i data-lucide="x"></i></button></div><form id="pattern-form" class="grid grid-cols-1 md:grid-cols-2 gap-4"><input type="hidden" name="id" /><div><label class="form-label">Tên mẫu hình</label><input required name="name" class="input" /></div><div><label class="form-label">Ảnh mẫu</label><input name="image" type="file" accept="image/*" class="input !p-2 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-white" /></div><div class="md:col-span-2"><label class="form-label">Điều kiện (mỗi dòng 1 điều kiện)</label><textarea required name="conditions" class="input h-48 resize-none"></textarea></div><div class="md:col-span-2 flex justify-end gap-2 mt-2"><button type="button" class="btn btn-ghost" data-close="pattern-modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu mẫu hình</button></div></form></div></div>
-  <div id="radar-modal" class="modal hidden"><div class="modal-card max-w-4xl"><div class="modal-head"><h3 id="radar-modal-title" class="text-xl font-black">Thêm mã Radar</h3><button class="icon-btn" data-close="radar-modal"><i data-lucide="x"></i></button></div><form id="radar-form" class="grid grid-cols-1 md:grid-cols-3 gap-4"><input type="hidden" name="id" /><input type="hidden" name="type" /><div><label class="form-label">Mã cổ phiếu</label><input required name="ticker" class="input" /></div><div><label class="form-label">Setup</label><select required name="setup" class="input"></select></div><div><label class="form-label">Trạng thái</label><select required name="status" class="input"><option value="Sẵn sàng">Sẵn sàng</option><option value="Đang theo dõi">Đang theo dõi</option><option value="Chờ nến tuần">Chờ nến tuần</option></select></div><div><label class="form-label">Điểm số (0-100)</label><input required name="score" type="number" min="0" max="100" class="input" /></div><div><label class="form-label">Pivot / Giá quan sát</label><input name="pivot" type="number" step="0.01" class="input" /></div><div><label class="form-label">Ảnh chart</label><input name="image" type="file" accept="image/*" class="input !p-2 file:mr-3 file:rounded-xl file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-white" /></div><div class="md:col-span-3"><label class="form-label">Ghi chú</label><textarea name="notes" class="input h-32 resize-none" placeholder="Ví dụ: VCP 6 tuần, vol cạn, RS cao, chờ nến tuần xác nhận..."></textarea></div><div class="md:col-span-3 flex justify-end gap-2 mt-2"><button type="button" class="btn btn-ghost" data-close="radar-modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu mã</button></div></form></div></div>
-  <div id="image-viewer" class="modal hidden viewer-modal"><div class="viewer-shell"><button class="icon-btn absolute top-4 right-4 z-10" data-close="image-viewer"><i data-lucide="x"></i></button><img id="viewer-image" alt="Xem ảnh lớn" class="max-w-[95vw] max-h-[90vh] rounded-2xl shadow-2xl" /></div></div>
+  <main id="app" class="app-shell"></main>
 
   <script type="module" src="js/app.js"></script>
 </body>
