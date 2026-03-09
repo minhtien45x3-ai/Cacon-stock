@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'cacon_stock_pro_v8';
+const STORAGE_KEY = 'cacon_stock_pro_v82';
 let state = {
   initialCapital: 500000000,
   market: { distDays: 2 },
@@ -6,6 +6,7 @@ let state = {
   patterns: [],
   radarItems: [],
   libraryNotes: '',
+  analysisUploadImage: '',
   mindset: [
     { title: 'Trước giao dịch', text: 'Có xu hướng thị trường thuận lợi, mã thuộc nhóm dẫn dắt, điểm mua rõ ràng, khối lượng phù hợp.' },
     { title: 'Trong giao dịch', text: 'Không FOMO, không bình quân giá xuống, chỉ tăng vị thế khi cổ phiếu xác nhận đúng.' },
@@ -13,12 +14,15 @@ let state = {
   ]
 };
 let equityChart, monthlyChart, radarChart;
+let currentPatternImage = '';
+let patternSearchTerm = '';
+
 
 const defaultPatterns = [
-  { name: 'VCP', conditions: ['Xu hướng trước đó tăng rõ', 'Biên độ co hẹp dần', 'Khối lượng giảm dần khi siết nền', 'Breakout cùng volume tăng mạnh', 'RS gần đỉnh mới'] },
-  { name: 'Cup with Handle', conditions: ['Nền cốc tối thiểu 7 tuần', 'Tay cầm ngắn, khối lượng khô', 'Đỉnh phải tiệm cận đỉnh trái', 'Điểm mua tại pivot tay cầm', 'Không có áp lực phân phối lớn'] },
-  { name: '3C', conditions: ['Có nền giá rõ ràng', 'Biên độ thu hẹp liên tục', 'Khối lượng cạn ở vùng đáy nền', 'Breakout có lực cầu xác nhận'] },
-  { name: 'Base on Base', conditions: ['Nền thứ hai nằm trên nền thứ nhất', 'Không bị phân phối nặng', 'MA20/50 nâng đỡ giá', 'Điểm mua gần pivot nền mới'] }
+  { id:'p_vcp', name: 'VCP', image:'assets/mau hinh.png', conditions: ['Xu hướng trước đó tăng rõ', 'Biên độ co hẹp dần', 'Khối lượng giảm dần khi siết nền', 'Breakout cùng volume tăng mạnh', 'RS gần đỉnh mới'] },
+  { id:'p_cwh', name: 'Cup with Handle', image:'assets/Phan tich.png', conditions: ['Nền cốc tối thiểu 7 tuần', 'Tay cầm ngắn, khối lượng khô', 'Đỉnh phải tiệm cận đỉnh trái', 'Điểm mua tại pivot tay cầm', 'Không có áp lực phân phối lớn'] },
+  { id:'p_3c', name: '3C', image:'assets/Phan tich.png', conditions: ['Có nền giá rõ ràng', 'Biên độ thu hẹp liên tục', 'Khối lượng cạn ở vùng đáy nền', 'Breakout có lực cầu xác nhận'] },
+  { id:'p_bob', name: 'Base on Base', image:'assets/Phan tich.png', conditions: ['Nền thứ hai nằm trên nền thứ nhất', 'Không bị phân phối nặng', 'MA20/50 nâng đỡ giá', 'Điểm mua gần pivot nền mới'] }
 ];
 
 const demoTrades = [
@@ -44,7 +48,8 @@ function loadState(){
     if(raw){
       const parsed = JSON.parse(raw);
       state = { ...state, ...parsed };
-      state.patterns = parsed.patterns?.length ? parsed.patterns : defaultPatterns;
+      state.patterns = parsed.patterns?.length ? parsed.patterns.map((p,idx)=>({image:'assets/mau hinh.png', id:p.id || `p_${idx}_${Date.now()}`, ...p})) : defaultPatterns;
+      state.analysisUploadImage = parsed.analysisUploadImage || '';
       return;
     }
   } catch(e) {}
@@ -252,23 +257,60 @@ function renderAnalysis(){
   document.getElementById('analysis-checklist').innerHTML = pattern.conditions.map((c, i) => `
     <label class="check-item"><input type="checkbox"> Điều kiện ${i+1}: ${c}</label>
   `).join('');
+  const patternImage = pattern?.image || 'assets/mau hinh.png';
+  document.getElementById('analysis-pattern-image').src = patternImage;
+  currentPatternImage = patternImage;
+  const wrap = document.getElementById('analysis-preview-wrap');
+  if(state.analysisUploadImage){
+    wrap.className = 'compare-frame compare-frame-xl clickable-frame';
+    wrap.innerHTML = `<img src="${state.analysisUploadImage}" class="compare-image compare-image-xl" id="analysis-upload-preview" alt="Chart upload">`;
+  } else {
+    wrap.className = 'preview-empty compare-frame compare-frame-xl';
+    wrap.innerHTML = 'Chưa có ảnh tải lên';
+  }
 }
 
 function renderPatterns(){
-  document.getElementById('pattern-list').innerHTML = state.patterns.map((p, idx) => `
+  const keyword = patternSearchTerm.trim().toLowerCase();
+  const filtered = state.patterns.filter(p => !keyword || p.name.toLowerCase().includes(keyword) || p.conditions.join(' ').toLowerCase().includes(keyword));
+  document.getElementById('pattern-list').innerHTML = filtered.length ? filtered.map((p) => {
+    const idx = state.patterns.findIndex(x => x.id === p.id);
+    const safeName = p.name.replace(/'/g, '&#39;');
+    return `
     <div class="pattern-item">
       <div class="section-head between">
         <div>
           <h4>${p.name}</h4>
           <p class="footer-sub">${p.conditions.length} điều kiện chuẩn</p>
         </div>
-        <button class="action-link" onclick="removePattern(${idx})">Xóa</button>
+        <div class="pattern-actions"><button class="action-link" onclick="editPattern(${idx})">Sửa</button><button class="action-link" onclick="removePattern(${idx})">Xóa</button></div>
       </div>
-      <ul>${p.conditions.map(c=>`<li>${c}</li>`).join('')}</ul>
-    </div>
-  `).join('');
+      ${p.image ? `<div class="pattern-thumb-wrap"><img src="${p.image}" class="pattern-thumb" alt="${p.name}"><button class="action-link" onclick="openImageViewer('${p.image}', '${safeName}')">Xem lớn</button></div>` : ''}<ul>${p.conditions.map(c=>`<li>${c}</li>`).join('')}</ul>
+    </div>`;
+  }).join('') : '<div class="pattern-item">Không tìm thấy mẫu hình phù hợp.</div>';
 }
+
+function openPatternModal(pattern = null, idx = ''){
+  document.getElementById('pattern-modal').classList.remove('hidden');
+  document.getElementById('pattern-id').value = idx;
+  document.getElementById('pattern-name').value = pattern?.name || '';
+  document.getElementById('pattern-conditions').value = pattern?.conditions?.join('\n') || '';
+  currentPatternImage = pattern?.image || '';
+  document.getElementById('pattern-image-preview').innerHTML = currentPatternImage ? `<img src="${currentPatternImage}" class="compare-image compare-image-large" alt="Ảnh mẫu hình">` : 'Chưa có ảnh mẫu';
+}
+function closePatternModal(){ document.getElementById('pattern-modal').classList.add('hidden'); }
+
+function openImageViewer(src, title='Ảnh biểu đồ'){
+  if(!src) return;
+  document.getElementById('image-viewer-img').src = src;
+  document.getElementById('image-viewer-title').textContent = title;
+  document.getElementById('image-viewer-modal').classList.remove('hidden');
+}
+window.openImageViewer = openImageViewer;
+function closeImageViewer(){ document.getElementById('image-viewer-modal').classList.add('hidden'); }
+function editPattern(idx){ const pattern = state.patterns[idx]; if(pattern) openPatternModal(pattern, idx); }
 function removePattern(idx){ state.patterns.splice(idx,1); persistAndRefresh(); }
+window.editPattern = editPattern;
 window.removePattern = removePattern;
 
 function renderRadarForms(){
@@ -359,16 +401,56 @@ function bindEvents(){
     if(!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      document.getElementById('analysis-preview-wrap').innerHTML = `<img src="${reader.result}" class="compare-image" alt="Chart upload">`;
+      state.analysisUploadImage = reader.result;
+      saveState();
+      renderAnalysis();
+      lucide.createIcons();
     };
     reader.readAsDataURL(file);
   });
-  document.getElementById('add-pattern-btn').addEventListener('click', ()=>{
-    const name = prompt('Tên mẫu hình mới:');
-    if(!name) return;
-    const raw = prompt('Nhập các điều kiện, ngăn cách bằng dấu |');
-    const conditions = (raw || '').split('|').map(s=>s.trim()).filter(Boolean);
-    state.patterns.push({ name, conditions: conditions.length ? conditions : ['Thêm điều kiện chi tiết sau'] });
+  document.getElementById('analysis-clear-btn').addEventListener('click', ()=>{
+    state.analysisUploadImage = '';
+    saveState();
+    renderAnalysis();
+  });
+  document.getElementById('open-pattern-fullscreen').addEventListener('click', ()=>{
+    const img = document.getElementById('analysis-pattern-image');
+    openImageViewer(img?.src || '', 'Mẫu chuẩn');
+  });
+  document.getElementById('open-upload-fullscreen').addEventListener('click', ()=>{
+    if(state.analysisUploadImage) openImageViewer(state.analysisUploadImage, 'Biểu đồ hiện tại');
+  });
+  document.getElementById('add-pattern-btn').addEventListener('click', ()=> openPatternModal());
+  document.getElementById('pattern-search').addEventListener('input', (e)=>{ patternSearchTerm = e.target.value || ''; renderPatterns(); });
+  document.getElementById('close-pattern-modal').addEventListener('click', closePatternModal);
+  document.getElementById('cancel-pattern-btn').addEventListener('click', closePatternModal);
+  document.getElementById('pattern-image-upload').addEventListener('change', (e)=>{
+    const file = e.target.files?.[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      currentPatternImage = reader.result;
+      document.getElementById('pattern-image-preview').innerHTML = `<img src="${reader.result}" class="compare-image compare-image-large" alt="Ảnh mẫu hình">`;
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('pattern-replace-image-btn').addEventListener('click', ()=> document.getElementById('pattern-image-upload').click());
+  document.getElementById('pattern-remove-image-btn').addEventListener('click', ()=>{
+    currentPatternImage = '';
+    document.getElementById('pattern-image-preview').innerHTML = 'Chưa có ảnh mẫu';
+  });
+  document.getElementById('pattern-form').addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const idx = document.getElementById('pattern-id').value;
+    const pattern = {
+      id: idx !== '' && state.patterns[idx]?.id ? state.patterns[idx].id : `p_${Date.now()}`,
+      name: document.getElementById('pattern-name').value.trim(),
+      image: currentPatternImage || 'assets/mau hinh.png',
+      conditions: document.getElementById('pattern-conditions').value.split('\n').map(s=>s.trim()).filter(Boolean)
+    };
+    if(!pattern.conditions.length) pattern.conditions = ['Thêm điều kiện chi tiết sau'];
+    if(idx !== '') state.patterns[Number(idx)] = pattern; else state.patterns.push(pattern);
+    closePatternModal();
     persistAndRefresh();
   });
   document.getElementById('add-radar-btn').addEventListener('click', ()=>{
@@ -385,7 +467,16 @@ function bindEvents(){
     state.patterns = defaultPatterns;
     state.radarItems = demoRadar;
     state.market.distDays = 2;
+    state.analysisUploadImage = '';
     persistAndRefresh();
+  });
+  document.getElementById('close-image-viewer').addEventListener('click', closeImageViewer);
+  document.getElementById('image-viewer-close').addEventListener('click', closeImageViewer);
+  document.addEventListener('click', (e)=>{
+    const frame = e.target.closest('.clickable-frame');
+    if(!frame) return;
+    if(frame.querySelector('#analysis-pattern-image')) openImageViewer(document.getElementById('analysis-pattern-image').src, 'Mẫu chuẩn');
+    if(frame.querySelector('#analysis-upload-preview')) openImageViewer(state.analysisUploadImage, 'Biểu đồ hiện tại');
   });
 }
 

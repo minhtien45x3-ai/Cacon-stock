@@ -195,9 +195,9 @@
       </section>
 
       <section class="tab-panel hidden" id="tab-analysis">
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head between">
+        <div class="analysis-layout analysis-layout-wide">
+          <article class="glass-panel section-card analysis-checklist-card compact-card">
+            <div class="section-head between compact-head">
               <div>
                 <p class="section-label">Checklist hệ thống</p>
                 <h3 class="section-title">Chọn mẫu hình để hiện điều kiện kiểm tra</h3>
@@ -207,25 +207,36 @@
             <div id="analysis-checklist" class="checklist-box"></div>
           </article>
 
-          <article class="glass-panel section-card">
+          <article class="glass-panel section-card analysis-visual-card expanded-card">
             <div class="section-head between">
               <div>
                 <p class="section-label">So sánh biểu đồ hiện tại</p>
-                <h3 class="section-title">Chèn ảnh chart và đối chiếu với mẫu</h3>
+                <h3 class="section-title">Ảnh lớn hơn để đối chiếu dễ nhìn</h3>
               </div>
-              <label class="btn btn-secondary upload-btn">
-                <input type="file" id="analysis-upload" accept="image/*" hidden>
-                <i data-lucide="image-plus"></i> Chèn ảnh
-              </label>
+              <div class="topbar-actions wrap-right">
+                <label class="btn btn-secondary upload-btn">
+                  <input type="file" id="analysis-upload" accept="image/*" hidden>
+                  <i data-lucide="image-plus"></i> Chèn ảnh
+                </label>
+                <button class="btn btn-secondary" id="analysis-clear-btn"><i data-lucide="trash-2"></i> Xóa ảnh</button>
+              </div>
             </div>
-            <div class="compare-grid">
-              <div class="compare-box">
-                <p class="compare-label">Mẫu chuẩn</p>
-                <img src="assets/mau hinh.png" alt="Mẫu chuẩn" class="compare-image" />
+            <div class="compare-grid compare-grid-large compare-grid-xl">
+              <div class="compare-box compare-box-large">
+                <div class="compare-head-row">
+                  <p class="compare-label">Mẫu chuẩn</p>
+                  <button class="action-link action-link-strong" id="open-pattern-fullscreen">Phóng to</button>
+                </div>
+                <div class="compare-frame compare-frame-xl clickable-frame" data-fullscreen-target="analysis-pattern-image">
+                  <img src="assets/mau hinh.png" alt="Mẫu chuẩn" class="compare-image compare-image-xl" id="analysis-pattern-image" />
+                </div>
               </div>
-              <div class="compare-box">
-                <p class="compare-label">Biểu đồ hiện tại</p>
-                <div id="analysis-preview-wrap" class="preview-empty">Chưa có ảnh tải lên</div>
+              <div class="compare-box compare-box-large">
+                <div class="compare-head-row">
+                  <p class="compare-label">Biểu đồ hiện tại</p>
+                  <button class="action-link action-link-strong" id="open-upload-fullscreen">Phóng to</button>
+                </div>
+                <div id="analysis-preview-wrap" class="preview-empty compare-frame compare-frame-xl">Chưa có ảnh tải lên</div>
               </div>
             </div>
           </article>
@@ -233,19 +244,22 @@
       </section>
 
       <section class="tab-panel hidden" id="tab-patterns">
-        <div class="card-grid two-main">
+        <div class="card-grid two-main pattern-library-layout">
           <article class="glass-panel section-card">
             <div class="section-head between">
               <div>
                 <p class="section-label">Thư viện mẫu hình</p>
-                <h3 class="section-title">Tên mẫu hình và điều kiện của mẫu hình</h3>
+                <h3 class="section-title">Tên mẫu hình, ảnh mẫu và điều kiện</h3>
               </div>
-              <button class="btn btn-secondary" id="add-pattern-btn"><i data-lucide="plus"></i> Thêm mẫu</button>
+              <div class="topbar-actions">
+                <input id="pattern-search" class="input pattern-search-input" placeholder="Tìm mẫu hình..." />
+                <button class="btn btn-secondary" id="add-pattern-btn"><i data-lucide="plus"></i> Thêm mẫu</button>
+              </div>
             </div>
-            <div id="pattern-list" class="pattern-list"></div>
+            <div id="pattern-list" class="pattern-list pattern-list-dense"></div>
           </article>
 
-          <article class="glass-panel section-card image-cover-card">
+          <article class="glass-panel section-card image-cover-card pattern-side-card">
             <img src="assets/Phan tich.png" alt="Phân tích" class="cover-image" />
           </article>
         </div>
@@ -340,6 +354,58 @@
           <button type="submit" class="btn btn-primary">Lưu lệnh</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="pattern-modal">
+    <div class="modal-card glass-panel">
+      <div class="section-head between">
+        <div>
+          <p class="section-label">Thêm / sửa mẫu hình</p>
+          <h3 class="section-title">Thư viện mẫu hình</h3>
+        </div>
+        <button class="icon-btn" id="close-pattern-modal"><i data-lucide="x"></i></button>
+      </div>
+      <form id="pattern-form" class="form-grid">
+        <input type="hidden" id="pattern-id" />
+        <label><span class="form-label">Tên mẫu hình</span><input required type="text" id="pattern-name" class="input" placeholder="VD: VCP" /></label>
+        <label>
+          <span class="form-label">Ảnh mẫu hình</span>
+          <label class="btn btn-secondary upload-btn pattern-upload-inline">
+            <input type="file" id="pattern-image-upload" accept="image/*" hidden>
+            <i data-lucide="image-plus"></i> Up ảnh mẫu
+          </label>
+        </label>
+        <label class="span-2"><span class="form-label">Điều kiện (mỗi dòng 1 điều kiện)</span><textarea id="pattern-conditions" class="textarea small" placeholder="Xu hướng trước đó tăng rõ&#10;Biên độ co hẹp dần&#10;Khối lượng cạn"></textarea></label>
+        <div class="span-2">
+          <span class="form-label">Xem trước ảnh mẫu</span>
+          <div id="pattern-image-preview" class="preview-empty pattern-preview-box">Chưa có ảnh mẫu</div>
+          <div class="mini-actions">
+            <button type="button" class="btn btn-secondary btn-small" id="pattern-replace-image-btn"><i data-lucide="refresh-cw"></i> Thay ảnh</button>
+            <button type="button" class="btn btn-secondary btn-small" id="pattern-remove-image-btn"><i data-lucide="trash-2"></i> Xóa ảnh</button>
+          </div>
+        </div>
+        <div class="modal-actions span-2">
+          <button type="button" class="btn btn-secondary" id="cancel-pattern-btn">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu mẫu hình</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="image-viewer-modal">
+    <div class="image-viewer-backdrop" id="image-viewer-close"></div>
+    <div class="image-viewer-card glass-panel">
+      <div class="section-head between">
+        <div>
+          <p class="section-label">Xem ảnh chi tiết</p>
+          <h3 class="section-title" id="image-viewer-title">Ảnh biểu đồ</h3>
+        </div>
+        <button class="icon-btn" id="close-image-viewer"><i data-lucide="x"></i></button>
+      </div>
+      <div class="image-viewer-stage">
+        <img id="image-viewer-img" src="" alt="Xem ảnh lớn" />
+      </div>
     </div>
   </div>
 
