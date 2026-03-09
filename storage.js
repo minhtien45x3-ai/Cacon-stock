@@ -1,10 +1,26 @@
 import { sampleData } from '../data/sample-data.js';
-const KEY = 'cacon-stock-v10.2';
+const KEY = 'cacon-stock-v10.4';
+
+function cloneSample() {
+  return JSON.parse(JSON.stringify(sampleData));
+}
 
 export function loadState() {
   const raw = localStorage.getItem(KEY);
-  if (!raw) return structuredClone(sampleData);
-  try { return JSON.parse(raw); } catch { return structuredClone(sampleData); }
+  if (!raw) {
+    const seeded = cloneSample();
+    localStorage.setItem(KEY, JSON.stringify(seeded));
+    return seeded;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') throw new Error('invalid');
+    return parsed;
+  } catch {
+    const seeded = cloneSample();
+    localStorage.setItem(KEY, JSON.stringify(seeded));
+    return seeded;
+  }
 }
 
 export function saveState(state) {
@@ -12,7 +28,7 @@ export function saveState(state) {
 }
 
 export function seedSampleData() {
-  const cloned = structuredClone(sampleData);
+  const cloned = cloneSample();
   saveState(cloned);
   return cloned;
 }

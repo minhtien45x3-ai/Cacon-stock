@@ -22,7 +22,10 @@ let activeTab = localStorage.getItem('cacon-active-tab') || 'dashboard';
 
 function renderTabs() {
   const root = document.getElementById('tabs');
-  root.innerHTML = tabs.map(t => `<button class="tab-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`).join('');
+  if (!root) return;
+  root.innerHTML = tabs
+    .map(t => `<button class="tab-btn ${t.id === activeTab ? 'active' : ''}" data-tab="${t.id}">${t.label}</button>`)
+    .join('');
   root.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
     activeTab = btn.dataset.tab;
     localStorage.setItem('cacon-active-tab', activeTab);
@@ -33,23 +36,40 @@ function renderTabs() {
 function renderApp() {
   renderTabs();
   const current = tabs.find(t => t.id === activeTab) || tabs[0];
-  document.getElementById('app').innerHTML = current.render(state);
-  current.bind?.(renderApp, state);
+  const app = document.getElementById('app');
+  if (!app) return;
+  try {
+    app.innerHTML = current.render(state);
+    current.bind?.(renderApp, state);
+  } catch (err) {
+    console.error(err);
+    app.innerHTML = `
+      <section class="panel">
+        <div class="section-title">Lỗi hiển thị</div>
+        <h2 class="big-title">Đã có lỗi khi nạp module ${current.label}</h2>
+        <div class="small">${String(err.message || err)}</div>
+      </section>`;
+  }
 }
 
-document.getElementById('seed-btn').addEventListener('click', () => {
-  Object.keys(state).forEach(k => delete state[k]);
-  Object.assign(state, seedSampleData());
-  renderApp();
-});
-document.getElementById('export-btn').addEventListener('click', () => exportState(state));
-document.getElementById('import-file').addEventListener('change', async e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const imported = await importState(file);
-  Object.keys(state).forEach(k => delete state[k]);
-  Object.assign(state, imported);
-  renderApp();
-});
+function bindGlobalActions() {
+  document.getElementById('seed-btn')?.addEventListener('click', () => {
+    Object.keys(state).forEach(k => delete state[k]);
+    Object.assign(state, seedSampleData());
+    renderApp();
+  });
+  document.getElementById('export-btn')?.addEventListener('click', () => exportState(state));
+  document.getElementById('import-file')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const imported = await importState(file);
+    Object.keys(state).forEach(k => delete state[k]);
+    Object.assign(state, imported);
+    renderApp();
+  });
+}
 
-renderApp();
+window.addEventListener('DOMContentLoaded', () => {
+  bindGlobalActions();
+  renderApp();
+});

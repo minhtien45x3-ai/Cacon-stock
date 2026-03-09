@@ -1,4 +1,4 @@
-# CaCon Stock PRO V10.3
+# CaCon Stock PRO V10.4
 
 Bản này đã:
 - tách tab riêng theo từng mô-đun
