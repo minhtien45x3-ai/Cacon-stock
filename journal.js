@@ -1,119 +1,52 @@
-import { getData, saveData } from '../core/storage.js';
-import { currency, escapeHtml } from '../core/utils.js';
-import { fillSetupOptions, openModal, closeModal } from '../core/dom.js';
+import { money, uid } from '../core/utils.js';
+import { updateState, state } from '../core/state.js';
 
-export function renderJournal(data, stats) {
-  const filterEl = document.getElementById('journal-filter-setup');
-  const previousFilter = filterEl.value || 'all';
-  fillSetupOptions(filterEl, data.patterns, true);
-  filterEl.value = Array.from(filterEl.options).some(o => o.value === previousFilter) ? previousFilter : 'all';
-  const selected = filterEl.value;
-
-  const trades = stats.trades
-    .slice()
-    .sort((a,b) => b.date.localeCompare(a.date))
-    .filter(t => selected === 'all' || t.setup === selected);
-
-  const body = document.getElementById('journal-body');
-  body.innerHTML = trades.map(t => `
-    <tr>
-      <td>${t.date}</td>
-      <td class="font-black text-white">${escapeHtml(t.ticker)}</td>
-      <td>${escapeHtml(t.setup)}</td>
-      <td class="text-right">${t.buy}</td>
-      <td class="text-right">${t.sell}</td>
-      <td class="text-right">${Number(t.qty).toLocaleString('vi-VN')}</td>
-      <td class="text-right">${Number(t.rMultiple).toFixed(1)}</td>
-      <td class="text-right ${t.pnl >= 0 ? 'trade-pnl-pos' : 'trade-pnl-neg'}">${currency(t.pnl)}</td>
-      <td class="text-right">
-        <button class="link-btn" data-action="edit-trade" data-id="${t.id}">Sửa</button>
-        <button class="link-btn danger ml-2" data-action="delete-trade" data-id="${t.id}">Xóa</button>
-      </td>
-    </tr>
-  `).join('') || '<tr><td colspan="9" class="py-6 text-center text-slate-400">Chưa có giao dịch.</td></tr>';
-
-  const latest = trades[0] || stats.trades.slice().sort((a,b) => b.date.localeCompare(a.date))[0];
-  document.getElementById('journal-side').innerHTML = latest ? `
-    <div class="space-y-4">
-      <div class="subpanel p-4">
-        <div class="text-sm text-slate-400">Mã</div>
-        <div class="text-3xl font-black text-white">${escapeHtml(latest.ticker)}</div>
-        <div class="mt-2 badge ${latest.pnl >= 0 ? 'badge-green' : 'badge-rose'}">${escapeHtml(latest.setup)}</div>
+export function renderJournal(currentState) {
+  const setups = [...new Set(currentState.patterns.map(p => p.name))];
+  const latest = currentState.journal[0];
+  return `
+    <section class="grid grid-2">
+      <div class="panel">
+        <div class="section-title">Nhật ký giao dịch</div>
+        <h2 class="big-title">Ví dụ mẫu đã liên kết với Dashboard</h2>
+        <div class="form-row">
+          <input id="trade-date" class="input" type="date" value="2026-03-08" />
+          <input id="trade-ticker" class="input" placeholder="Mã CP" value="VCI" />
+          <select id="trade-setup">${setups.map(s => `<option>${s}</option>`).join('')}</select>
+          <input id="trade-pnl" class="input" type="number" value="6500" placeholder="PnL" />
+        </div>
+        <div class="actions"><button id="add-trade" class="ui-btn ui-btn-green">Thêm ví dụ lệnh</button></div>
+        <div class="table-wrap" style="margin-top:16px">
+          <table>
+            <thead><tr><th>Ngày</th><th>Mã</th><th>Setup</th><th>PnL</th><th>Ghi chú</th></tr></thead>
+            <tbody>
+              ${currentState.journal.map(t => `<tr><td>${t.date}</td><td><strong>${t.ticker}</strong></td><td>${t.setup}</td><td class="${t.pnl >= 0 ? 'success' : 'loss'}">${money(t.pnl)}</td><td>${t.note || ''}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="stat-chip"><div class="text-slate-400 text-sm">Ngày</div><div class="text-white font-black mt-1">${latest.date}</div></div>
-        <div class="stat-chip"><div class="text-slate-400 text-sm">PnL</div><div class="${latest.pnl >= 0 ? 'text-emerald-300' : 'text-rose-300'} font-black mt-1">${currency(latest.pnl)}</div></div>
-        <div class="stat-chip"><div class="text-slate-400 text-sm">R</div><div class="text-white font-black mt-1">${Number(latest.rMultiple).toFixed(1)}</div></div>
-        <div class="stat-chip"><div class="text-slate-400 text-sm">Biên lợi nhuận</div><div class="text-white font-black mt-1">${latest.percent.toFixed(1)}%</div></div>
+      <div class="panel">
+        <div class="section-title">Lệnh gần nhất</div>
+        <h2 class="big-title">Khung bên phải đã có dữ liệu</h2>
+        ${latest ? `<div class="card-mini"><div class="small">Mã</div><div class="value" style="font-size:34px;font-weight:900">${latest.ticker}</div><div class="small">Setup: ${latest.setup}</div><div class="small">PnL: ${money(latest.pnl)}</div><div class="small">Ghi chú: ${latest.note}</div></div>` : ''}
+        <img class="module-image" style="margin-top:16px" src="assets/images/nhat_ky.png" alt="Nhật ký" />
+        <div class="link-note">journal.js lưu lệnh mới vào storage.js, sau đó dashboard.js và analysis.js đều đọc lại dữ liệu này.</div>
       </div>
-      <div class="subpanel p-4">
-        <div class="text-slate-400 text-sm">Ghi chú</div>
-        <div class="text-white mt-2 leading-7">${escapeHtml(latest.notes || 'Không có ghi chú')}</div>
-      </div>
-    </div>
-  ` : '<div class="text-slate-400">Chưa có dữ liệu nhật ký.</div>';
+    </section>
+  `;
 }
 
-export function openTradeModal(id = null) {
-  const data = getData();
-  const form = document.getElementById('trade-form');
-  form.reset();
-  fillSetupOptions(form.querySelector('select[name="setup"]'), data.patterns);
-  document.getElementById('trade-modal-title').textContent = id ? 'Sửa lệnh' : 'Thêm lệnh';
-
-  if (id) {
-    const trade = data.trades.find(t => t.id === id);
-    if (!trade) return;
-    Object.keys(trade).forEach(key => {
-      if (form.elements[key]) form.elements[key].value = trade[key];
-    });
-  } else {
-    form.elements.id.value = '';
-    form.elements.date.value = new Date().toISOString().slice(0, 10);
-  }
-  openModal('trade-modal');
-}
-
-export function deleteTrade(id, renderApp) {
-  if (!confirm('Xóa lệnh này?')) return;
-  const data = getData();
-  data.trades = data.trades.filter(t => t.id !== id);
-  saveData(data);
-  renderApp();
-}
-
-export function bindJournalEvents(renderApp) {
-  document.getElementById('journal-filter-setup').addEventListener('change', renderApp);
-  document.getElementById('new-trade-btn').addEventListener('click', () => openTradeModal());
-
-  document.getElementById('journal-body').addEventListener('click', event => {
-    const btn = event.target.closest('[data-action]');
-    if (!btn) return;
-    const { action, id } = btn.dataset;
-    if (action === 'edit-trade') openTradeModal(id);
-    if (action === 'delete-trade') deleteTrade(id, renderApp);
-  });
-
-  document.getElementById('trade-form').addEventListener('submit', event => {
-    event.preventDefault();
-    const data = getData();
-    const payload = Object.fromEntries(new FormData(event.target).entries());
+export function bindJournal(onChange) {
+  document.getElementById('add-trade')?.addEventListener('click', () => {
     const trade = {
-      id: payload.id || Math.random().toString(36).slice(2, 10),
-      date: payload.date,
-      ticker: payload.ticker.toUpperCase().trim(),
-      setup: payload.setup,
-      buy: Number(payload.buy),
-      sell: Number(payload.sell),
-      qty: Number(payload.qty),
-      rMultiple: Number(payload.rMultiple),
-      notes: payload.notes || ''
+      id: uid(),
+      date: document.getElementById('trade-date').value,
+      ticker: document.getElementById('trade-ticker').value.toUpperCase(),
+      setup: document.getElementById('trade-setup').value,
+      pnl: Number(document.getElementById('trade-pnl').value || 0),
+      note: 'Ví dụ thêm nhanh để kiểm tra liên kết module.'
     };
-    const index = data.trades.findIndex(t => t.id === trade.id);
-    if (index >= 0) data.trades[index] = trade;
-    else data.trades.push(trade);
-    saveData(data);
-    closeModal('trade-modal');
-    renderApp();
+    updateState(s => { s.journal.unshift(trade); });
+    onChange();
   });
 }
