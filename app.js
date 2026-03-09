@@ -1,3 +1,15 @@
+
+function bindTabEvents() {
+  const buttons = document.querySelectorAll('.tab-btn');
+  const panes = document.querySelectorAll('.tab-pane');
+  const activate = (tab) => {
+    buttons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
+    panes.forEach(pane => pane.classList.toggle('active', pane.id === `tab-${tab}`));
+    localStorage.setItem('cacon-active-tab', tab);
+  };
+  buttons.forEach(btn => btn.addEventListener('click', () => activate(btn.dataset.tab)));
+  activate(localStorage.getItem('cacon-active-tab') || 'dashboard');
+}
 import { getData, saveData, resetToSample } from './core/storage.js';
 import { initModalClosers, showImage } from './core/dom.js';
 import { renderMarquee, renderMetrics, renderEquityChart, renderSetupRanking, renderMonthStats, getStats } from './modules/dashboard.js';
@@ -25,6 +37,7 @@ function renderApp() {
 }
 
 function bindGlobalEvents() {
+  bindTabEvents();
   initModalClosers();
   bindJournalEvents(renderApp);
   bindPatternEvents(renderApp, showImage);
