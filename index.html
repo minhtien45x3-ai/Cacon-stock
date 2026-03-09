@@ -1,414 +1,303 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CaCon Stock PRO V8</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CaCon Stock PRO V8.5</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div class="app-shell">
-    <aside class="sidebar glass-panel">
+<body class="min-h-screen overflow-hidden">
+  <div class="global-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div></div>
+
+  <div id="login-modal" class="fixed inset-0 z-[300] bg-slate-950/95 flex items-center justify-center p-4">
+    <div class="glass-panel p-8 w-full max-w-md space-y-6 text-center">
+      <h2 class="text-2xl font-black text-white uppercase">CaCon <span class="text-emerald-400">Stock PRO V8.5</span></h2>
+      <p class="text-slate-400 text-sm">Đăng nhập Firebase hoặc vào chế độ demo để dùng ngay trên GitHub Pages.</p>
+      <div class="space-y-4">
+        <input type="email" id="login-email" placeholder="Email" class="field">
+        <input type="password" id="login-pass" placeholder="Mật khẩu" class="field">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="handleLogin()" class="btn-primary">Vào hệ thống</button>
+        <button onclick="enterDemoMode()" class="btn-secondary">Dùng demo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="h-screen flex flex-col relative z-10">
+    <header class="h-16 border-b border-white/10 bg-black/20 backdrop-blur-lg flex items-center justify-between px-4 md:px-6 shrink-0 z-50 gap-4">
       <div>
-        <div class="brand-box">
-          <div class="brand-dot"></div>
-          <div>
-            <p class="brand-title">CaCon Stock</p>
-            <p class="brand-subtitle">Trading Journal PRO V8</p>
+        <h1 class="text-xl font-black text-white uppercase">CaCon <span class="text-emerald-400">Stock</span></h1>
+        <p class="text-[11px] text-slate-400 hidden md:block">Trading Journal PRO theo phong cách Mark Minervini</p>
+      </div>
+      <nav class="flex flex-wrap gap-2 md:gap-4 text-[10px] font-black uppercase">
+        <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active">Tổng quan</button>
+        <button onclick="switchTab('market')" id="btn-market" class="nav-btn">Thị trường</button>
+        <button onclick="switchTab('journal')" id="btn-journal" class="nav-btn">Nhật ký</button>
+        <button onclick="switchTab('analysis')" id="btn-analysis" class="nav-btn">Phân tích</button>
+        <button onclick="switchTab('patterns')" id="btn-patterns" class="nav-btn">Mẫu hình</button>
+        <button onclick="switchTab('radar')" id="btn-radar" class="nav-btn">Radar</button>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button onclick="seedSampleData()" class="btn-secondary !px-4"><i data-lucide="database"></i><span>Nạp dữ liệu mẫu</span></button>
+        <button onclick="openTradeModal()" class="btn-primary !px-4"><i data-lucide="plus"></i><span>Thêm lệnh</span></button>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 custom-scrollbar">
+      <section class="glass-panel px-4 py-3 overflow-hidden">
+        <div class="ticker-track" id="headline-ticker"></div>
+      </section>
+
+      <section class="summary-grid" id="summary-bar"></section>
+
+      <section id="tab-dashboard" class="tab-content space-y-6">
+        <div class="grid lg:grid-cols-[1.2fr_0.8fr] gap-6">
+          <div class="glass-panel p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <p class="section-kicker">Đường cong vốn</p>
+                <h2 class="section-title">Tăng trưởng vốn từ dữ liệu nhật ký</h2>
+              </div>
+            </div>
+            <div class="h-[320px]"><canvas id="equity-chart"></canvas></div>
+          </div>
+          <div class="space-y-6">
+            <div class="glass-panel p-5">
+              <p class="section-kicker">Mẫu hình hiệu quả</p>
+              <h2 class="section-title">Xếp hạng theo tỷ lệ thắng</h2>
+              <div id="pattern-ranking" class="mt-4 space-y-3"></div>
+            </div>
+            <div class="glass-panel p-5">
+              <p class="section-kicker">Theo tháng</p>
+              <h2 class="section-title">Số lệnh và lãi/lỗ</h2>
+              <div id="monthly-stats" class="mt-4 space-y-3"></div>
+            </div>
           </div>
         </div>
-
-        <nav class="nav-list" id="nav-list">
-          <button class="nav-item active" data-tab="overview"><i data-lucide="layout-dashboard"></i><span>Tổng quan</span></button>
-          <button class="nav-item" data-tab="market"><i data-lucide="activity"></i><span>Thị trường</span></button>
-          <button class="nav-item" data-tab="journal"><i data-lucide="notebook-pen"></i><span>Nhật ký</span></button>
-          <button class="nav-item" data-tab="analysis"><i data-lucide="scan-search"></i><span>Phân tích hệ thống</span></button>
-          <button class="nav-item" data-tab="patterns"><i data-lucide="gallery-vertical-end"></i><span>Mẫu hình</span></button>
-          <button class="nav-item" data-tab="radar"><i data-lucide="radar"></i><span>Radar</span></button>
-          <button class="nav-item" data-tab="library"><i data-lucide="library-big"></i><span>Thư viện</span></button>
-          <button class="nav-item" data-tab="mindset"><i data-lucide="brain-circuit"></i><span>Tâm lý</span></button>
-        </nav>
-      </div>
-
-      <div class="sidebar-footer glass-panel-soft">
-        <p class="small-label">Dữ liệu</p>
-        <p class="footer-main" id="storage-mode">Local demo mode</p>
-        <p class="footer-sub">Sẵn sàng đưa lên GitHub Pages</p>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar glass-panel">
-        <div>
-          <h1 class="page-title" id="page-title">Tổng quan</h1>
-          <p class="page-subtitle">Bảng điều khiển theo phong cách Mark Minervini, liên kết dữ liệu giữa các mô-đun.</p>
-        </div>
-        <div class="topbar-actions">
-          <button class="btn btn-secondary" id="seed-demo-btn"><i data-lucide="database-zap"></i> Nạp dữ liệu mẫu</button>
-          <button class="btn btn-primary" id="add-trade-top-btn"><i data-lucide="plus"></i> Thêm lệnh</button>
-        </div>
-      </header>
-
-      <section class="ticker-wrap glass-panel-soft">
-        <div class="ticker-track" id="ticker-track"></div>
       </section>
 
-      <section class="tab-panel" id="tab-overview">
-        <div class="card-grid four">
-          <article class="metric-card glass-panel">
-            <p class="metric-label">Vốn hiện tại</p>
-            <h3 class="metric-value" id="metric-equity">0 đ</h3>
-            <p class="metric-note" id="metric-equity-note">Tính từ vốn đầu kỳ + lãi lỗ nhật ký</p>
-          </article>
-          <article class="metric-card glass-panel">
-            <p class="metric-label">Lãi/Lỗ ròng</p>
-            <h3 class="metric-value" id="metric-pnl">0 đ</h3>
-            <p class="metric-note" id="metric-pnl-note">Hiệu quả toàn bộ giao dịch</p>
-          </article>
-          <article class="metric-card glass-panel">
-            <p class="metric-label">Win rate</p>
-            <h3 class="metric-value" id="metric-winrate">0%</h3>
-            <p class="metric-note" id="metric-winrate-note">Tỷ lệ lệnh thắng</p>
-          </article>
-          <article class="metric-card glass-panel">
-            <p class="metric-label">Khuyến nghị thị trường</p>
-            <h3 class="metric-value" id="metric-market">An toàn</h3>
-            <p class="metric-note" id="metric-market-note">Dựa trên số ngày phân phối</p>
-          </article>
+      <section id="tab-market" class="tab-content hidden space-y-6">
+        <div class="grid lg:grid-cols-[0.8fr_1.2fr] gap-6">
+          <div class="glass-panel p-6">
+            <p class="section-kicker">Ngày phân phối</p>
+            <h2 class="section-title mb-5">Đánh giá trạng thái thị trường</h2>
+            <div class="flex items-end gap-4">
+              <input type="number" min="0" max="10" id="market-dist-days" class="market-input" />
+              <button onclick="saveMarket()" class="btn-primary">Lưu</button>
+            </div>
+            <div id="market-state-card" class="mt-6 state-card"></div>
+          </div>
+          <div class="glass-panel p-6">
+            <p class="section-kicker">Nguyên tắc tỷ trọng</p>
+            <h2 class="section-title mb-4">Bảng quy tắc theo số ngày phân phối</h2>
+            <div class="space-y-3 text-sm text-slate-300">
+              <div class="rule-row"><span>1-2 ngày</span><strong>Thị trường bình thường</strong></div>
+              <div class="rule-row"><span>3 ngày</span><strong>Có rủi ro - hạ tỷ trọng margin</strong></div>
+              <div class="rule-row"><span>4 ngày</span><strong>Nguy cơ cao - giữ 50% tiền mặt</strong></div>
+              <div class="rule-row"><span>5-6 ngày</span><strong>Phòng thủ - đưa về 100% tiền mặt</strong></div>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head">
+      <section id="tab-journal" class="tab-content hidden space-y-6">
+        <div class="grid xl:grid-cols-[1.6fr_0.9fr] gap-6">
+          <div class="glass-panel p-5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
               <div>
-                <p class="section-label">Biểu đồ tăng trưởng vốn</p>
-                <h3 class="section-title">Equity curve lấy từ tab Nhật ký</h3>
+                <p class="section-kicker">Nhật ký giao dịch</p>
+                <h2 class="section-title">Tạo lệnh mới và lọc theo setup</h2>
               </div>
-            </div>
-            <canvas id="equityChart" height="120"></canvas>
-          </article>
-
-          <article class="glass-panel section-card">
-            <div class="section-head">
-              <div>
-                <p class="section-label">Xếp hạng mẫu hình</p>
-                <h3 class="section-title">Tỷ lệ thắng từ cao xuống thấp</h3>
-              </div>
-            </div>
-            <div id="setup-ranking" class="ranking-list"></div>
-          </article>
-        </div>
-
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head">
-              <div>
-                <p class="section-label">Thống kê theo tháng</p>
-                <h3 class="section-title">Số lệnh và lãi lỗ</h3>
-              </div>
-            </div>
-            <canvas id="monthlyChart" height="120"></canvas>
-          </article>
-
-          <article class="glass-panel section-card">
-            <div class="section-head">
-              <div>
-                <p class="section-label">Bảng nhanh</p>
-                <h3 class="section-title">Nhật ký gần nhất</h3>
+              <div class="flex gap-3 flex-wrap">
+                <select id="journal-setup-filter" class="field !py-3" onchange="renderJournal()"></select>
+                <button onclick="openTradeModal()" class="btn-primary">Thêm lệnh</button>
               </div>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr><th>Ngày</th><th>Mã</th><th>Setup</th><th>R</th><th>PnL</th></tr>
-                </thead>
-                <tbody id="recent-trades"></tbody>
-              </table>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section class="tab-panel hidden" id="tab-market">
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head between">
-              <div>
-                <p class="section-label">Distribution Day</p>
-                <h3 class="section-title">Đánh giá trạng thái thị trường</h3>
-              </div>
-            </div>
-            <div class="market-box">
-              <label class="form-label">Số ngày phân phối hiện tại</label>
-              <div class="market-input-row">
-                <input type="number" id="dist-days-input" min="0" max="10" class="input big-input" />
-                <button class="btn btn-primary" id="save-market-btn">Cập nhật</button>
-              </div>
-              <div id="market-status-card" class="market-status-card"></div>
-              <ul class="market-rules">
-                <li>1-2 ngày: Thị trường bình thường</li>
-                <li>3 ngày: Có rủi ro, hạ tỷ trọng margin</li>
-                <li>4 ngày: Nguy cơ cao, đưa 50% về tiền mặt</li>
-                <li>5-6 ngày: Phòng thủ, ưu tiên 100% tiền mặt</li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="glass-panel section-card image-cover-card">
-            <img src="assets/Thi truong.png" alt="Thị trường" class="cover-image" />
-          </article>
-        </div>
-      </section>
-
-      <section class="tab-panel hidden" id="tab-journal">
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head between">
-              <div>
-                <p class="section-label">Nhật ký giao dịch</p>
-                <h3 class="section-title">Tạo lệnh mới với đầy đủ thành phần</h3>
-              </div>
-              <button class="btn btn-primary" id="add-trade-btn"><i data-lucide="plus"></i> Thêm lệnh</button>
-            </div>
-            <div class="table-wrap">
-              <table class="data-table">
+              <table class="w-full text-sm">
                 <thead>
                   <tr>
                     <th>Ngày</th><th>Mã</th><th>Setup</th><th>Điểm mua</th><th>Điểm bán</th><th>KL</th><th>R</th><th>PnL</th><th></th>
                   </tr>
                 </thead>
-                <tbody id="journal-table-body"></tbody>
+                <tbody id="journal-body"></tbody>
               </table>
             </div>
-          </article>
-
-          <article class="glass-panel section-card image-cover-card">
-            <img src="assets/nhat ky.png" alt="Nhật ký" class="cover-image" />
-          </article>
+          </div>
+          <div class="glass-panel p-5">
+            <p class="section-kicker">Lệnh gần nhất</p>
+            <h2 class="section-title">Chi tiết giao dịch bên phải</h2>
+            <div id="journal-detail" class="mt-4 space-y-4"></div>
+          </div>
         </div>
       </section>
 
-      <section class="tab-panel hidden" id="tab-analysis">
-        <div class="analysis-layout analysis-layout-wide">
-          <article class="glass-panel section-card analysis-checklist-card compact-card">
-            <div class="section-head between compact-head">
+      <section id="tab-analysis" class="tab-content hidden space-y-6">
+        <div class="grid xl:grid-cols-[0.72fr_1.28fr] gap-6">
+          <div class="glass-panel p-5">
+            <p class="section-kicker">Checklist hệ thống</p>
+            <h2 class="section-title">Chọn mẫu hình để hiện điều kiện kiểm tra</h2>
+            <select id="analysis-pattern-select" class="field mt-4 !py-3" onchange="renderAnalysis()"></select>
+            <div id="analysis-checklist" class="mt-5 space-y-3"></div>
+            <div id="analysis-stats" class="mt-5"></div>
+          </div>
+          <div class="glass-panel p-5">
+            <div class="flex items-center justify-between gap-4 mb-4">
               <div>
-                <p class="section-label">Checklist hệ thống</p>
-                <h3 class="section-title">Chọn mẫu hình để hiện điều kiện kiểm tra</h3>
+                <p class="section-kicker">So sánh biểu đồ hiện tại</p>
+                <h2 class="section-title">Ảnh mẫu to hơn để dễ nhìn</h2>
               </div>
-              <select id="analysis-pattern-select" class="input select"></select>
+              <div class="flex gap-2 flex-wrap">
+                <button onclick="triggerFile('analysis-current-upload')" class="btn-secondary">Chèn chart hiện tại</button>
+                <button onclick="clearAnalysisCurrentImage()" class="btn-secondary">Xóa ảnh</button>
+              </div>
             </div>
-            <div id="analysis-checklist" class="checklist-box"></div>
-          </article>
-
-          <article class="glass-panel section-card analysis-visual-card expanded-card">
-            <div class="section-head between">
+            <input type="file" id="analysis-current-upload" accept="image/*" class="hidden" onchange="handleAnalysisCurrentUpload(event)">
+            <div class="grid md:grid-cols-2 gap-5 items-start">
               <div>
-                <p class="section-label">So sánh biểu đồ hiện tại</p>
-                <h3 class="section-title">Ảnh lớn hơn để đối chiếu dễ nhìn</h3>
+                <p class="image-label">Mẫu chuẩn</p>
+                <div class="big-image-card" id="analysis-sample-card"></div>
               </div>
-              <div class="topbar-actions wrap-right">
-                <label class="btn btn-secondary upload-btn">
-                  <input type="file" id="analysis-upload" accept="image/*" hidden>
-                  <i data-lucide="image-plus"></i> Chèn ảnh
-                </label>
-                <button class="btn btn-secondary" id="analysis-clear-btn"><i data-lucide="trash-2"></i> Xóa ảnh</button>
+              <div>
+                <p class="image-label">Biểu đồ hiện tại</p>
+                <div class="big-image-card" id="analysis-current-card"></div>
               </div>
             </div>
-            <div class="compare-grid compare-grid-large compare-grid-xl">
-              <div class="compare-box compare-box-large">
-                <div class="compare-head-row">
-                  <p class="compare-label">Mẫu chuẩn</p>
-                  <button class="action-link action-link-strong" id="open-pattern-fullscreen">Phóng to</button>
-                </div>
-                <div class="compare-frame compare-frame-xl clickable-frame" data-fullscreen-target="analysis-pattern-image">
-                  <img src="assets/mau hinh.png" alt="Mẫu chuẩn" class="compare-image compare-image-xl" id="analysis-pattern-image" />
-                </div>
-              </div>
-              <div class="compare-box compare-box-large">
-                <div class="compare-head-row">
-                  <p class="compare-label">Biểu đồ hiện tại</p>
-                  <button class="action-link action-link-strong" id="open-upload-fullscreen">Phóng to</button>
-                </div>
-                <div id="analysis-preview-wrap" class="preview-empty compare-frame compare-frame-xl">Chưa có ảnh tải lên</div>
-              </div>
-            </div>
-          </article>
+          </div>
         </div>
       </section>
 
-      <section class="tab-panel hidden" id="tab-patterns">
-        <div class="card-grid two-main pattern-library-layout">
-          <article class="glass-panel section-card">
-            <div class="section-head between">
-              <div>
-                <p class="section-label">Thư viện mẫu hình</p>
-                <h3 class="section-title">Tên mẫu hình, ảnh mẫu và điều kiện</h3>
-              </div>
-              <div class="topbar-actions">
-                <input id="pattern-search" class="input pattern-search-input" placeholder="Tìm mẫu hình..." />
-                <button class="btn btn-secondary" id="add-pattern-btn"><i data-lucide="plus"></i> Thêm mẫu</button>
-              </div>
+      <section id="tab-patterns" class="tab-content hidden space-y-6">
+        <div class="glass-panel p-5">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+            <div>
+              <p class="section-kicker">Thư viện mẫu hình</p>
+              <h2 class="section-title">Thêm, sửa và upload ảnh mẫu</h2>
             </div>
-            <div id="pattern-list" class="pattern-list pattern-list-dense"></div>
-          </article>
-
-          <article class="glass-panel section-card image-cover-card pattern-side-card">
-            <img src="assets/Phan tich.png" alt="Phân tích" class="cover-image" />
-          </article>
+            <div class="flex gap-3 flex-wrap">
+              <input id="pattern-search" class="field !py-3 w-[260px]" placeholder="Tìm mẫu hình..." oninput="renderPatterns()">
+              <button onclick="openPatternModal()" class="btn-primary">Thêm mẫu</button>
+            </div>
+          </div>
+          <div id="pattern-grid" class="pattern-grid"></div>
         </div>
       </section>
 
-      <section class="tab-panel hidden" id="tab-radar">
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head between">
+      <section id="tab-radar" class="tab-content hidden space-y-6">
+        <div class="grid lg:grid-cols-3 gap-6">
+          <div class="glass-panel p-5 radar-col" data-group="nearBuy">
+            <div class="flex items-center justify-between gap-2 mb-4">
               <div>
-                <p class="section-label">Radar cổ phiếu</p>
-                <h3 class="section-title">Thêm mã để chấm điểm theo 6 tiêu chí</h3>
+                <p class="section-kicker">Module 1</p>
+                <h2 class="section-title text-xl">Gần điểm mua</h2>
               </div>
-              <button class="btn btn-primary" id="add-radar-btn"><i data-lucide="plus"></i> Thêm mã</button>
+              <button onclick="openRadarModal('nearBuy')" class="btn-primary !px-4 !py-2">Thêm mã</button>
             </div>
-            <div id="radar-form-list" class="radar-form-list"></div>
-          </article>
-
-          <article class="glass-panel section-card">
-            <div class="section-head">
+            <div id="radar-nearBuy" class="space-y-3"></div>
+          </div>
+          <div class="glass-panel p-5 radar-col" data-group="watchlist">
+            <div class="flex items-center justify-between gap-2 mb-4">
               <div>
-                <p class="section-label">Biểu đồ radar</p>
-                <h3 class="section-title">So sánh chất lượng thiết lập</h3>
+                <p class="section-kicker">Module 2</p>
+                <h2 class="section-title text-xl">Cổ phiếu theo dõi</h2>
               </div>
+              <button onclick="openRadarModal('watchlist')" class="btn-primary !px-4 !py-2">Thêm mã</button>
             </div>
-            <canvas id="radarChart" height="240"></canvas>
-          </article>
-        </div>
-      </section>
-
-      <section class="tab-panel hidden" id="tab-library">
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head">
+            <div id="radar-watchlist" class="space-y-3"></div>
+          </div>
+          <div class="glass-panel p-5 radar-col" data-group="longTerm">
+            <div class="flex items-center justify-between gap-2 mb-4">
               <div>
-                <p class="section-label">Kho tri thức</p>
-                <h3 class="section-title">Ghi nhanh checklist học tập và review</h3>
+                <p class="section-kicker">Module 3</p>
+                <h2 class="section-title text-xl">Dài hạn - nến tuần</h2>
               </div>
+              <button onclick="openRadarModal('longTerm')" class="btn-primary !px-4 !py-2">Thêm mã</button>
             </div>
-            <textarea id="library-notes" class="textarea" placeholder="Ghi kiến thức, review bài học, checklist cần luyện..."></textarea>
-            <div class="section-actions">
-              <button class="btn btn-primary" id="save-library-btn">Lưu ghi chú</button>
-            </div>
-          </article>
-          <article class="glass-panel section-card image-cover-card">
-            <img src="assets/Thu vien.png" alt="Thư viện" class="cover-image" />
-          </article>
-        </div>
-      </section>
-
-      <section class="tab-panel hidden" id="tab-mindset">
-        <div class="card-grid two-main">
-          <article class="glass-panel section-card">
-            <div class="section-head">
-              <div>
-                <p class="section-label">Kỷ luật tâm lý</p>
-                <h3 class="section-title">Checklist trước - trong - sau giao dịch</h3>
-              </div>
-            </div>
-            <div class="mindset-grid" id="mindset-grid"></div>
-          </article>
-          <article class="glass-panel section-card image-cover-card">
-            <img src="assets/Tam ly.png" alt="Tâm lý" class="cover-image" />
-          </article>
+            <div id="radar-longTerm" class="space-y-3"></div>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
-  <div class="modal hidden" id="trade-modal">
-    <div class="modal-card glass-panel">
-      <div class="section-head between">
-        <div>
-          <p class="section-label">Thêm / sửa lệnh</p>
-          <h3 class="section-title">Nhật ký giao dịch</h3>
-        </div>
-        <button class="icon-btn" id="close-trade-modal"><i data-lucide="x"></i></button>
+  <div id="trade-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><h3 id="trade-modal-title">Thêm lệnh</h3><button onclick="closeModal('trade-modal')">✕</button></div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <input id="trade-date" type="date" class="field">
+        <input id="trade-ticker" class="field" placeholder="Mã cổ phiếu">
+        <select id="trade-setup" class="field"></select>
+        <input id="trade-qty" type="number" class="field" placeholder="Khối lượng">
+        <input id="trade-buy" type="number" step="0.01" class="field" placeholder="Điểm mua">
+        <input id="trade-sell" type="number" step="0.01" class="field" placeholder="Điểm bán">
+        <input id="trade-risk" type="number" step="0.1" class="field" placeholder="R multiple">
+        <input id="trade-note" class="field" placeholder="Ghi chú">
       </div>
-      <form id="trade-form" class="form-grid">
-        <input type="hidden" id="trade-id" />
-        <label><span class="form-label">Ngày</span><input required type="date" id="trade-date" class="input" /></label>
-        <label><span class="form-label">Mã cổ phiếu</span><input required type="text" id="trade-ticker" class="input" placeholder="VD: FPT" /></label>
-        <label><span class="form-label">Mẫu hình</span><input required type="text" id="trade-setup" class="input" placeholder="VD: VCP" /></label>
-        <label><span class="form-label">Khối lượng</span><input required type="number" id="trade-size" class="input" min="1" /></label>
-        <label><span class="form-label">Giá mua</span><input required type="number" id="trade-entry" class="input" step="0.01" /></label>
-        <label><span class="form-label">Giá bán</span><input required type="number" id="trade-exit" class="input" step="0.01" /></label>
-        <label><span class="form-label">Risk (R)</span><input type="number" id="trade-r" class="input" step="0.1" /></label>
-        <label><span class="form-label">Đánh giá</span><select id="trade-grade" class="input select"><option>A+</option><option>A</option><option>B</option><option>C</option></select></label>
-        <label class="span-2"><span class="form-label">Ghi chú</span><textarea id="trade-note" class="textarea small" placeholder="Lý do mua, tín hiệu volume, tâm lý, lỗi cần tránh..."></textarea></label>
-        <div class="modal-actions span-2">
-          <button type="button" class="btn btn-secondary" id="cancel-trade-btn">Hủy</button>
-          <button type="submit" class="btn btn-primary">Lưu lệnh</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal hidden" id="pattern-modal">
-    <div class="modal-card glass-panel">
-      <div class="section-head between">
-        <div>
-          <p class="section-label">Thêm / sửa mẫu hình</p>
-          <h3 class="section-title">Thư viện mẫu hình</h3>
-        </div>
-        <button class="icon-btn" id="close-pattern-modal"><i data-lucide="x"></i></button>
-      </div>
-      <form id="pattern-form" class="form-grid">
-        <input type="hidden" id="pattern-id" />
-        <label><span class="form-label">Tên mẫu hình</span><input required type="text" id="pattern-name" class="input" placeholder="VD: VCP" /></label>
-        <label>
-          <span class="form-label">Ảnh mẫu hình</span>
-          <label class="btn btn-secondary upload-btn pattern-upload-inline">
-            <input type="file" id="pattern-image-upload" accept="image/*" hidden>
-            <i data-lucide="image-plus"></i> Up ảnh mẫu
-          </label>
-        </label>
-        <label class="span-2"><span class="form-label">Điều kiện (mỗi dòng 1 điều kiện)</span><textarea id="pattern-conditions" class="textarea small" placeholder="Xu hướng trước đó tăng rõ&#10;Biên độ co hẹp dần&#10;Khối lượng cạn"></textarea></label>
-        <div class="span-2">
-          <span class="form-label">Xem trước ảnh mẫu</span>
-          <div id="pattern-image-preview" class="preview-empty pattern-preview-box">Chưa có ảnh mẫu</div>
-          <div class="mini-actions">
-            <button type="button" class="btn btn-secondary btn-small" id="pattern-replace-image-btn"><i data-lucide="refresh-cw"></i> Thay ảnh</button>
-            <button type="button" class="btn btn-secondary btn-small" id="pattern-remove-image-btn"><i data-lucide="trash-2"></i> Xóa ảnh</button>
-          </div>
-        </div>
-        <div class="modal-actions span-2">
-          <button type="button" class="btn btn-secondary" id="cancel-pattern-btn">Hủy</button>
-          <button type="submit" class="btn btn-primary">Lưu mẫu hình</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal hidden" id="image-viewer-modal">
-    <div class="image-viewer-backdrop" id="image-viewer-close"></div>
-    <div class="image-viewer-card glass-panel">
-      <div class="section-head between">
-        <div>
-          <p class="section-label">Xem ảnh chi tiết</p>
-          <h3 class="section-title" id="image-viewer-title">Ảnh biểu đồ</h3>
-        </div>
-        <button class="icon-btn" id="close-image-viewer"><i data-lucide="x"></i></button>
-      </div>
-      <div class="image-viewer-stage">
-        <img id="image-viewer-img" src="" alt="Xem ảnh lớn" />
+      <div class="modal-foot">
+        <button onclick="closeModal('trade-modal')" class="btn-secondary">Hủy</button>
+        <button onclick="saveTrade()" class="btn-primary">Lưu lệnh</button>
       </div>
     </div>
   </div>
 
+  <div id="pattern-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><h3 id="pattern-modal-title">Thêm mẫu hình</h3><button onclick="closeModal('pattern-modal')">✕</button></div>
+      <div class="space-y-3">
+        <input id="pattern-name" class="field" placeholder="Tên mẫu hình">
+        <textarea id="pattern-conditions" class="field min-h-[140px]" placeholder="Mỗi điều kiện một dòng"></textarea>
+        <div class="flex items-center gap-3 flex-wrap">
+          <input id="pattern-image-input" type="file" accept="image/*" class="field !py-2 !px-2">
+          <button onclick="clearPatternImageInput()" class="btn-secondary">Xóa ảnh chọn</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button onclick="closeModal('pattern-modal')" class="btn-secondary">Hủy</button>
+        <button onclick="savePattern()" class="btn-primary">Lưu mẫu</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="radar-modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><h3 id="radar-modal-title">Thêm mã Radar</h3><button onclick="closeModal('radar-modal')">✕</button></div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <input id="radar-ticker" class="field" placeholder="Mã cổ phiếu">
+        <select id="radar-group" class="field">
+          <option value="nearBuy">Gần điểm mua</option>
+          <option value="watchlist">Theo dõi</option>
+          <option value="longTerm">Dài hạn - nến tuần</option>
+        </select>
+        <select id="radar-setup" class="field"></select>
+        <input id="radar-entry" type="text" class="field" placeholder="Vùng mua / điểm mua">
+        <input id="radar-status" type="text" class="field" placeholder="Trạng thái">
+        <input id="radar-timeframe" type="text" class="field" placeholder="Khung thời gian">
+        <textarea id="radar-note" class="field md:col-span-2 min-h-[110px]" placeholder="Luận điểm, trigger, quản trị vị thế"></textarea>
+        <input id="radar-image-input" type="file" accept="image/*" class="field md:col-span-2 !py-2 !px-2">
+      </div>
+      <div class="modal-foot">
+        <button onclick="closeModal('radar-modal')" class="btn-secondary">Hủy</button>
+        <button onclick="saveRadarItem()" class="btn-primary">Lưu mã</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="image-modal" class="modal hidden image-modal">
+    <div class="image-modal-card">
+      <div class="modal-head"><h3>Xem chart full màn hình</h3><button onclick="closeModal('image-modal')">✕</button></div>
+      <img id="image-modal-img" src="" alt="Chart phóng to" class="image-modal-img">
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+  <script src="firebase.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
