@@ -1,187 +1,348 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trading Journal PRO</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="style.css">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CaCon Stock PRO V8</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 </head>
-
-<body class="theme-dark">
-
-<header>
-
-<h1>Trading Journal PRO</h1>
-
-<select onchange="changeTheme(this.value)">
-<option value="theme-dark">Dark</option>
-<option value="theme-emerald">Emerald</option>
-<option value="theme-purple">Purple</option>
-</select>
-
-</header>
-
-
-<nav>
-
-<button onclick="switchTab('dashboard')">Dashboard</button>
-<button onclick="switchTab('market')">Market</button>
-<button onclick="switchTab('analysis')">Phân tích</button>
-<button onclick="switchTab('journal')">Nhật ký</button>
-<button onclick="switchTab('patterns')">Mẫu hình</button>
-<button onclick="switchTab('radar')">Radar</button>
-<button onclick="switchTab('takeprofit')">Chốt lời</button>
-<button onclick="switchTab('library')">Thư viện</button>
-<button onclick="switchTab('quiz')">Rèn luyện</button>
-
-</nav>
-
-
-<main>
-
-
-<section id="dashboard" class="tab">
-
-<h2>Tổng quan</h2>
-
-<canvas id="equityChart"></canvas>
-
-</section>
-
-
-
-<section id="market" class="tab hidden">
-
-<h2>Thị trường</h2>
-
-<label>Distribution days</label>
-
-<input id="distDays" type="number">
-
-<button onclick="updateMarket()">Cập nhật</button>
-
-<p id="marketStatus"></p>
-
-</section>
-
-
-
-<section id="analysis" class="tab hidden">
-
-<h2>So sánh biểu đồ</h2>
-
-<div class="compare">
-
-<img id="patternChart">
-
-<div class="overlay">
-<img id="realChart">
-</div>
-
-<input id="slider-range" type="range" min="0" max="100" value="50">
-
-</div>
-
-<input type="file" id="uploadChart">
-
-</section>
-
-
-
-<section id="journal" class="tab hidden">
-
-<h2>Nhật ký giao dịch</h2>
-
-<table id="journalTable">
-
-<tr>
-<th>Date</th>
-<th>Ticker</th>
-<th>Entry</th>
-<th>Exit</th>
-<th>%</th>
-</tr>
-
-</table>
-
-</section>
-
-
-
-<section id="patterns" class="tab hidden">
-
-<h2>Mẫu hình</h2>
-
-<button onclick="addPattern()">Thêm mẫu</button>
-
-<div id="patternList"></div>
-
-</section>
-
-
-
-<section id="radar" class="tab hidden">
-
-<h2>Radar cổ phiếu</h2>
-
-<table id="radarTable"></table>
-
-</section>
-
-
-
-<section id="takeprofit" class="tab hidden">
-
-<h2>Chốt lời</h2>
-
-<label>Entry</label>
-<input id="entryPrice">
-
-<label>Stop</label>
-<input id="stopPrice">
-
-<button onclick="calcRR()">Tính R:R</button>
-
-<p id="rrResult"></p>
-
-</section>
-
-
-
-<section id="library" class="tab hidden">
-
-<h2>Thư viện kiến thức</h2>
-
-<button onclick="openLibraryModal()">Thêm bài</button>
-
-<div id="libraryList"></div>
-
-<div id="libraryContent"></div>
-
-</section>
-
-
-
-<section id="quiz" class="tab hidden">
-
-<h2>Rèn luyện</h2>
-
-<div id="quizBox"></div>
-
-</section>
-
-
-
-</main>
-
-<script src="app.js"></script>
-
+<body>
+  <div class="app-shell">
+    <aside class="sidebar glass-panel">
+      <div>
+        <div class="brand-box">
+          <div class="brand-dot"></div>
+          <div>
+            <p class="brand-title">CaCon Stock</p>
+            <p class="brand-subtitle">Trading Journal PRO V8</p>
+          </div>
+        </div>
+
+        <nav class="nav-list" id="nav-list">
+          <button class="nav-item active" data-tab="overview"><i data-lucide="layout-dashboard"></i><span>Tổng quan</span></button>
+          <button class="nav-item" data-tab="market"><i data-lucide="activity"></i><span>Thị trường</span></button>
+          <button class="nav-item" data-tab="journal"><i data-lucide="notebook-pen"></i><span>Nhật ký</span></button>
+          <button class="nav-item" data-tab="analysis"><i data-lucide="scan-search"></i><span>Phân tích hệ thống</span></button>
+          <button class="nav-item" data-tab="patterns"><i data-lucide="gallery-vertical-end"></i><span>Mẫu hình</span></button>
+          <button class="nav-item" data-tab="radar"><i data-lucide="radar"></i><span>Radar</span></button>
+          <button class="nav-item" data-tab="library"><i data-lucide="library-big"></i><span>Thư viện</span></button>
+          <button class="nav-item" data-tab="mindset"><i data-lucide="brain-circuit"></i><span>Tâm lý</span></button>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer glass-panel-soft">
+        <p class="small-label">Dữ liệu</p>
+        <p class="footer-main" id="storage-mode">Local demo mode</p>
+        <p class="footer-sub">Sẵn sàng đưa lên GitHub Pages</p>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar glass-panel">
+        <div>
+          <h1 class="page-title" id="page-title">Tổng quan</h1>
+          <p class="page-subtitle">Bảng điều khiển theo phong cách Mark Minervini, liên kết dữ liệu giữa các mô-đun.</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-secondary" id="seed-demo-btn"><i data-lucide="database-zap"></i> Nạp dữ liệu mẫu</button>
+          <button class="btn btn-primary" id="add-trade-top-btn"><i data-lucide="plus"></i> Thêm lệnh</button>
+        </div>
+      </header>
+
+      <section class="ticker-wrap glass-panel-soft">
+        <div class="ticker-track" id="ticker-track"></div>
+      </section>
+
+      <section class="tab-panel" id="tab-overview">
+        <div class="card-grid four">
+          <article class="metric-card glass-panel">
+            <p class="metric-label">Vốn hiện tại</p>
+            <h3 class="metric-value" id="metric-equity">0 đ</h3>
+            <p class="metric-note" id="metric-equity-note">Tính từ vốn đầu kỳ + lãi lỗ nhật ký</p>
+          </article>
+          <article class="metric-card glass-panel">
+            <p class="metric-label">Lãi/Lỗ ròng</p>
+            <h3 class="metric-value" id="metric-pnl">0 đ</h3>
+            <p class="metric-note" id="metric-pnl-note">Hiệu quả toàn bộ giao dịch</p>
+          </article>
+          <article class="metric-card glass-panel">
+            <p class="metric-label">Win rate</p>
+            <h3 class="metric-value" id="metric-winrate">0%</h3>
+            <p class="metric-note" id="metric-winrate-note">Tỷ lệ lệnh thắng</p>
+          </article>
+          <article class="metric-card glass-panel">
+            <p class="metric-label">Khuyến nghị thị trường</p>
+            <h3 class="metric-value" id="metric-market">An toàn</h3>
+            <p class="metric-note" id="metric-market-note">Dựa trên số ngày phân phối</p>
+          </article>
+        </div>
+
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Biểu đồ tăng trưởng vốn</p>
+                <h3 class="section-title">Equity curve lấy từ tab Nhật ký</h3>
+              </div>
+            </div>
+            <canvas id="equityChart" height="120"></canvas>
+          </article>
+
+          <article class="glass-panel section-card">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Xếp hạng mẫu hình</p>
+                <h3 class="section-title">Tỷ lệ thắng từ cao xuống thấp</h3>
+              </div>
+            </div>
+            <div id="setup-ranking" class="ranking-list"></div>
+          </article>
+        </div>
+
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Thống kê theo tháng</p>
+                <h3 class="section-title">Số lệnh và lãi lỗ</h3>
+              </div>
+            </div>
+            <canvas id="monthlyChart" height="120"></canvas>
+          </article>
+
+          <article class="glass-panel section-card">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Bảng nhanh</p>
+                <h3 class="section-title">Nhật ký gần nhất</h3>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr><th>Ngày</th><th>Mã</th><th>Setup</th><th>R</th><th>PnL</th></tr>
+                </thead>
+                <tbody id="recent-trades"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tab-market">
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head between">
+              <div>
+                <p class="section-label">Distribution Day</p>
+                <h3 class="section-title">Đánh giá trạng thái thị trường</h3>
+              </div>
+            </div>
+            <div class="market-box">
+              <label class="form-label">Số ngày phân phối hiện tại</label>
+              <div class="market-input-row">
+                <input type="number" id="dist-days-input" min="0" max="10" class="input big-input" />
+                <button class="btn btn-primary" id="save-market-btn">Cập nhật</button>
+              </div>
+              <div id="market-status-card" class="market-status-card"></div>
+              <ul class="market-rules">
+                <li>1-2 ngày: Thị trường bình thường</li>
+                <li>3 ngày: Có rủi ro, hạ tỷ trọng margin</li>
+                <li>4 ngày: Nguy cơ cao, đưa 50% về tiền mặt</li>
+                <li>5-6 ngày: Phòng thủ, ưu tiên 100% tiền mặt</li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="glass-panel section-card image-cover-card">
+            <img src="assets/Thi truong.png" alt="Thị trường" class="cover-image" />
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tab-journal">
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head between">
+              <div>
+                <p class="section-label">Nhật ký giao dịch</p>
+                <h3 class="section-title">Tạo lệnh mới với đầy đủ thành phần</h3>
+              </div>
+              <button class="btn btn-primary" id="add-trade-btn"><i data-lucide="plus"></i> Thêm lệnh</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Ngày</th><th>Mã</th><th>Setup</th><th>Điểm mua</th><th>Điểm bán</th><th>KL</th><th>R</th><th>PnL</th><th></th>
+                  </tr>
+                </thead>
+                <tbody id="journal-table-body"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="glass-panel section-card image-cover-card">
+            <img src="assets/nhat ky.png" alt="Nhật ký" class="cover-image" />
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tab-analysis">
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head between">
+              <div>
+                <p class="section-label">Checklist hệ thống</p>
+                <h3 class="section-title">Chọn mẫu hình để hiện điều kiện kiểm tra</h3>
+              </div>
+              <select id="analysis-pattern-select" class="input select"></select>
+            </div>
+            <div id="analysis-checklist" class="checklist-box"></div>
+          </article>
+
+          <article class="glass-panel section-card">
+            <div class="section-head between">
+              <div>
+                <p class="section-label">So sánh biểu đồ hiện tại</p>
+                <h3 class="section-title">Chèn ảnh chart và đối chiếu với mẫu</h3>
+              </div>
+              <label class="btn btn-secondary upload-btn">
+                <input type="file" id="analysis-upload" accept="image/*" hidden>
+                <i data-lucide="image-plus"></i> Chèn ảnh
+              </label>
+            </div>
+            <div class="compare-grid">
+              <div class="compare-box">
+                <p class="compare-label">Mẫu chuẩn</p>
+                <img src="assets/mau hinh.png" alt="Mẫu chuẩn" class="compare-image" />
+              </div>
+              <div class="compare-box">
+                <p class="compare-label">Biểu đồ hiện tại</p>
+                <div id="analysis-preview-wrap" class="preview-empty">Chưa có ảnh tải lên</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tab-patterns">
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head between">
+              <div>
+                <p class="section-label">Thư viện mẫu hình</p>
+                <h3 class="section-title">Tên mẫu hình và điều kiện của mẫu hình</h3>
+              </div>
+              <button class="btn btn-secondary" id="add-pattern-btn"><i data-lucide="plus"></i> Thêm mẫu</button>
+            </div>
+            <div id="pattern-list" class="pattern-list"></div>
+          </article>
+
+          <article class="glass-panel section-card image-cover-card">
+            <img src="assets/Phan tich.png" alt="Phân tích" class="cover-image" />
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tab-radar">
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head between">
+              <div>
+                <p class="section-label">Radar cổ phiếu</p>
+                <h3 class="section-title">Thêm mã để chấm điểm theo 6 tiêu chí</h3>
+              </div>
+              <button class="btn btn-primary" id="add-radar-btn"><i data-lucide="plus"></i> Thêm mã</button>
+            </div>
+            <div id="radar-form-list" class="radar-form-list"></div>
+          </article>
+
+          <article class="glass-panel section-card">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Biểu đồ radar</p>
+                <h3 class="section-title">So sánh chất lượng thiết lập</h3>
+              </div>
+            </div>
+            <canvas id="radarChart" height="240"></canvas>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tab-library">
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Kho tri thức</p>
+                <h3 class="section-title">Ghi nhanh checklist học tập và review</h3>
+              </div>
+            </div>
+            <textarea id="library-notes" class="textarea" placeholder="Ghi kiến thức, review bài học, checklist cần luyện..."></textarea>
+            <div class="section-actions">
+              <button class="btn btn-primary" id="save-library-btn">Lưu ghi chú</button>
+            </div>
+          </article>
+          <article class="glass-panel section-card image-cover-card">
+            <img src="assets/Thu vien.png" alt="Thư viện" class="cover-image" />
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel hidden" id="tab-mindset">
+        <div class="card-grid two-main">
+          <article class="glass-panel section-card">
+            <div class="section-head">
+              <div>
+                <p class="section-label">Kỷ luật tâm lý</p>
+                <h3 class="section-title">Checklist trước - trong - sau giao dịch</h3>
+              </div>
+            </div>
+            <div class="mindset-grid" id="mindset-grid"></div>
+          </article>
+          <article class="glass-panel section-card image-cover-card">
+            <img src="assets/Tam ly.png" alt="Tâm lý" class="cover-image" />
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="trade-modal">
+    <div class="modal-card glass-panel">
+      <div class="section-head between">
+        <div>
+          <p class="section-label">Thêm / sửa lệnh</p>
+          <h3 class="section-title">Nhật ký giao dịch</h3>
+        </div>
+        <button class="icon-btn" id="close-trade-modal"><i data-lucide="x"></i></button>
+      </div>
+      <form id="trade-form" class="form-grid">
+        <input type="hidden" id="trade-id" />
+        <label><span class="form-label">Ngày</span><input required type="date" id="trade-date" class="input" /></label>
+        <label><span class="form-label">Mã cổ phiếu</span><input required type="text" id="trade-ticker" class="input" placeholder="VD: FPT" /></label>
+        <label><span class="form-label">Mẫu hình</span><input required type="text" id="trade-setup" class="input" placeholder="VD: VCP" /></label>
+        <label><span class="form-label">Khối lượng</span><input required type="number" id="trade-size" class="input" min="1" /></label>
+        <label><span class="form-label">Giá mua</span><input required type="number" id="trade-entry" class="input" step="0.01" /></label>
+        <label><span class="form-label">Giá bán</span><input required type="number" id="trade-exit" class="input" step="0.01" /></label>
+        <label><span class="form-label">Risk (R)</span><input type="number" id="trade-r" class="input" step="0.1" /></label>
+        <label><span class="form-label">Đánh giá</span><select id="trade-grade" class="input select"><option>A+</option><option>A</option><option>B</option><option>C</option></select></label>
+        <label class="span-2"><span class="form-label">Ghi chú</span><textarea id="trade-note" class="textarea small" placeholder="Lý do mua, tín hiệu volume, tâm lý, lỗi cần tránh..."></textarea></label>
+        <div class="modal-actions span-2">
+          <button type="button" class="btn btn-secondary" id="cancel-trade-btn">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu lệnh</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
